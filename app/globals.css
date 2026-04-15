@@ -145,3 +145,43 @@ body {
     letter-spacing: -0.05em;
   }
 }
+
+/* Dual-range price slider */
+.price-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  width: 100%;
+  top: 0;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+}
+.price-slider::-webkit-slider-runnable-track {
+  background: transparent;
+}
+.price-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #BC2C2C;
+  border: 2px solid #2C2C2C;
+  cursor: pointer;
+  pointer-events: all;
+}
+.price-slider::-moz-range-track {
+  background: transparent;
+  border: none;
+}
+.price-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: #BC2C2C;
+  border: 2px solid #2C2C2C;
+  cursor: pointer;
+  pointer-events: all;
+  border-radius: 0;
+}

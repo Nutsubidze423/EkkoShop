@@ -54,15 +54,10 @@ export function ProductGrid({
 
   return (
     <div>
-      {/* Grid — 4 columns on xl, 2 on sm */}
-      <div
-        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-px"
-        style={{ backgroundColor: '#2C2C2C' }}
-      >
+      {/* Grid — cards with their own borders, proper gap, no background-color trick */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         {products.map((product, i) => (
-          <div key={product.productId} style={{ backgroundColor: '#F5F1E3' }}>
-            <ProductCard product={product} index={i} />
-          </div>
+          <ProductCard key={product.productId} product={product} index={i} />
         ))}
       </div>
 

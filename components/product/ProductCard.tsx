@@ -69,13 +69,18 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
   return (
     <motion.div
+      className="h-full"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.04 }}
     >
-      <Link href={`/product/${product.productId}`} className="block product-card group">
+      <Link
+        href={`/product/${product.productId}`}
+        className="product-card group flex flex-col h-full"
+        style={{ backgroundColor: '#F5F1E3' }}
+      >
         {/* Image */}
-        <div className="relative overflow-hidden">
+        <div className="relative overflow-hidden shrink-0">
           <ImageCarousel
             urls={images}
             alt={product.name}
@@ -109,29 +114,29 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           )}
         </div>
 
-        {/* Info */}
-        <div className="p-4">
+        {/* Info — flex-col flex-1 so price row always sits at the bottom */}
+        <div className="flex flex-col flex-1 p-5">
           {/* Category */}
           <p
-            className="font-sans font-black uppercase mb-1"
-            style={{ fontSize: '10px', color: '#BC2C2C', letterSpacing: '0.1em' }}
+            className="font-sans font-black uppercase mb-1.5"
+            style={{ fontSize: '10px', color: '#BC2C2C', letterSpacing: '0.12em' }}
           >
             {product.categoryName}
           </p>
 
-          {/* Name */}
+          {/* Name — clamp to 2 lines so height is consistent */}
           <h3
             className="font-display font-black text-dark uppercase leading-tight mb-3 line-clamp-2 transition-colors duration-200 group-hover:text-[#BC2C2C]"
-            style={{ fontSize: '13px', letterSpacing: '-0.02em' }}
+            style={{ fontSize: '14px', letterSpacing: '-0.02em' }}
           >
             {product.name}
           </h3>
 
-          {/* Price + CTA */}
-          <div className="flex items-center justify-between gap-2">
+          {/* Price + CTA pushed to bottom */}
+          <div className="flex items-center justify-between gap-2 mt-auto pt-3 border-t" style={{ borderColor: '#E8E2D3' }}>
             <span
               className="font-display font-black text-dark tabular-nums"
-              style={{ fontSize: '1rem', letterSpacing: '-0.02em' }}
+              style={{ fontSize: '1.05rem', letterSpacing: '-0.02em' }}
             >
               {t('common.currency')}{product.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
@@ -145,6 +150,14 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
                 backgroundColor: addedToCart ? '#5DA4C9' : inStock ? '#2C2C2C' : '#C8C2B0',
                 color: 'white',
                 cursor: !inStock || addedToCart ? 'not-allowed' : 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                if (inStock && !addedToCart)
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#BC2C2C'
+              }}
+              onMouseLeave={(e) => {
+                if (inStock && !addedToCart)
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#2C2C2C'
               }}
             >
               {addedToCart ? (

@@ -9,6 +9,7 @@ import { ProductGrid } from '@/components/product/ProductGrid'
 import { getAllProducts } from '@/lib/api/products'
 import { useTranslation } from '@/lib/i18n'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useAuthStore } from '@/store/authStore'
 import type { Product } from '@/lib/types'
 
 const PAGE_SIZE = 20
@@ -50,6 +51,7 @@ function BrandTicker() {
 }
 
 function HeroSection({ onShopNow }: { onShopNow: () => void }) {
+  const { user } = useAuthStore()
   return (
     <section className="relative overflow-hidden" style={{ backgroundColor: '#BC2C2C' }}>
       {/* Watermark */}
@@ -132,15 +134,17 @@ function HeroSection({ onShopNow }: { onShopNow: () => void }) {
             >
               SHOP NOW →
             </button>
-            <Link
-              href="/auth/login"
-              className="font-sans font-semibold uppercase transition-colors duration-200"
-              style={{ fontSize: '10px', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.55)' }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = 'white')}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.55)')}
-            >
-              SIGN IN
-            </Link>
+            {!user && (
+              <Link
+                href="/auth/login"
+                className="font-sans font-semibold uppercase transition-colors duration-200"
+                style={{ fontSize: '10px', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.55)' }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = 'white')}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.55)')}
+              >
+                SIGN IN
+              </Link>
+            )}
           </motion.div>
         </div>
 
