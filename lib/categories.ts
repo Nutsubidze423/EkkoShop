@@ -5,52 +5,50 @@ export interface Category {
   parentId: number | null
 }
 
-// Static category tree — IDs match the backend database.
-// Update IDs here if they differ from what the backend returns.
 export const CATEGORIES: Category[] = [
   // ── Parents ────────────────────────────────────────────────────────────────
-  { id: 100, name: 'Laptops', nameKa: 'ლეპტოპები', parentId: null },
-  { id: 200, name: 'Components', nameKa: 'კომპონენტები', parentId: null },
-  { id: 300, name: 'Accessories', nameKa: 'აქსესუარები', parentId: null },
-  { id: 400, name: 'Gaming', nameKa: 'გეიმინგი', parentId: null },
-  { id: 500, name: 'Storage', nameKa: 'მეხსიერება', parentId: null },
-  { id: 600, name: 'Monitors', nameKa: 'მონიტორები', parentId: null },
+  { id: 1, name: 'Gaming Consoles & Accessories', nameKa: 'სათამაშო კონსოლები და აქსესუარები', parentId: null },
+  { id: 2, name: 'PC Hardware & Components',      nameKa: 'PC კომპონენტები',                   parentId: null },
+  { id: 3, name: 'PC & Gaming Peripherals',       nameKa: 'PC და გეიმინგ პერიფერია',            parentId: null },
+  { id: 4, name: 'Gaming PCs & Laptops',          nameKa: 'სათამაშო PC და ლეპტოპები',           parentId: null },
+  { id: 5, name: 'Services',                      nameKa: 'სერვისები',                          parentId: null },
 
-  // ── Laptops ────────────────────────────────────────────────────────────────
-  { id: 101, name: 'Gaming Laptops', nameKa: 'სათამაშო ლეპტოპები', parentId: 100 },
-  { id: 102, name: 'Business Laptops', nameKa: 'ბიზნეს ლეპტოპები', parentId: 100 },
-  { id: 103, name: 'Ultrabooks', nameKa: 'ულტრაბუქები', parentId: 100 },
+  // ── Gaming Consoles & Accessories ─────────────────────────────────────────
+  { id: 101, name: 'Consoles',                  nameKa: 'კონსოლები',               parentId: 1 },
+  { id: 102, name: 'Gamepads & Controllers',    nameKa: 'გეიმპადები და კონტროლერები', parentId: 1 },
+  { id: 103, name: 'Controller Accessories',    nameKa: 'კონტროლერის აქსესუარები', parentId: 1 },
+  { id: 104, name: 'Gift Cards / Subscriptions',nameKa: 'სასაჩუქრე ბარათები',      parentId: 1 },
 
-  // ── Components ─────────────────────────────────────────────────────────────
-  { id: 201, name: 'Processors (CPU)', nameKa: 'პროცესორები', parentId: 200 },
-  { id: 202, name: 'Graphics Cards (GPU)', nameKa: 'ვიდეო ბარათები', parentId: 200 },
-  { id: 203, name: 'Motherboards', nameKa: 'დედა დაფები', parentId: 200 },
-  { id: 204, name: 'RAM', nameKa: 'ოპერატიული მეხსიერება', parentId: 200 },
-  { id: 205, name: 'Power Supplies', nameKa: 'კვების ბლოკები', parentId: 200 },
-  { id: 206, name: 'PC Cases', nameKa: 'კორპუსები', parentId: 200 },
-  { id: 207, name: 'Cooling', nameKa: 'გაგრილება', parentId: 200 },
+  // ── PC Hardware & Components ──────────────────────────────────────────────
+  { id: 201, name: 'Processors (CPU)',          nameKa: 'პროცესორები',             parentId: 2 },
+  { id: 202, name: 'Graphics Cards (GPU)',       nameKa: 'ვიდეო ბარათები',         parentId: 2 },
+  { id: 203, name: 'Motherboards',              nameKa: 'დედა დაფები',             parentId: 2 },
+  { id: 204, name: 'Memory (RAM)',               nameKa: 'ოპერატიული მეხსიერება',  parentId: 2 },
+  { id: 205, name: 'Storage (SSD / HDD / NVMe)',nameKa: 'მეხსიერება',              parentId: 2 },
+  { id: 206, name: 'Power Supplies (PSU)',       nameKa: 'კვების ბლოკები',         parentId: 2 },
+  { id: 207, name: 'PC Cases',                  nameKa: 'კორპუსები',               parentId: 2 },
+  { id: 208, name: 'Cooling Solutions',         nameKa: 'გაგრილება',               parentId: 2 },
+  { id: 209, name: 'Mining / Crypto Gear',      nameKa: 'მაინინგი',                parentId: 2 },
 
-  // ── Accessories ────────────────────────────────────────────────────────────
-  { id: 301, name: 'Keyboards', nameKa: 'კლავიატურები', parentId: 300 },
-  { id: 302, name: 'Mice', nameKa: 'მაუსები', parentId: 300 },
-  { id: 303, name: 'Headsets', nameKa: 'ყურსასმენები', parentId: 300 },
-  { id: 304, name: 'Webcams', nameKa: 'ვებ-კამერები', parentId: 300 },
-  { id: 305, name: 'Speakers', nameKa: 'დინამიკები', parentId: 300 },
-  { id: 306, name: 'Other Accessories', nameKa: 'სხვა აქსესუარები', parentId: 300 },
+  // ── PC & Gaming Peripherals ───────────────────────────────────────────────
+  { id: 301, name: 'Monitors',                  nameKa: 'მონიტორები',              parentId: 3 },
+  { id: 302, name: 'Keyboards',                 nameKa: 'კლავიატურები',            parentId: 3 },
+  { id: 303, name: 'Mice',                      nameKa: 'მაუსები',                 parentId: 3 },
+  { id: 304, name: 'Headsets',                  nameKa: 'ყურსასმენები',            parentId: 3 },
+  { id: 305, name: 'Speakers',                  nameKa: 'დინამიკები',              parentId: 3 },
+  { id: 306, name: 'Other Accessories',         nameKa: 'სხვა აქსესუარები',       parentId: 3 },
 
-  // ── Gaming ─────────────────────────────────────────────────────────────────
-  { id: 401, name: 'Consoles', nameKa: 'კონსოლები', parentId: 400 },
-  { id: 402, name: 'Controllers', nameKa: 'კონტროლერები', parentId: 400 },
-  { id: 403, name: 'Gaming Chairs', nameKa: 'სათამაშო სავარძლები', parentId: 400 },
+  // ── Gaming PCs & Laptops ──────────────────────────────────────────────────
+  { id: 401, name: 'Desktop PCs',               nameKa: 'დესკტოპ PC',              parentId: 4 },
+  { id: 402, name: 'Gaming Laptops',            nameKa: 'სათამაშო ლეპტოპები',      parentId: 4 },
+  { id: 403, name: 'Laptop Accessories',        nameKa: 'ლეპტოპის აქსესუარები',    parentId: 4 },
 
-  // ── Storage ────────────────────────────────────────────────────────────────
-  { id: 501, name: 'SSD', nameKa: 'SSD დისკები', parentId: 500 },
-  { id: 502, name: 'HDD', nameKa: 'HDD დისკები', parentId: 500 },
-  { id: 503, name: 'USB Drives', nameKa: 'ფლეშ დრაივები', parentId: 500 },
-
-  // ── Monitors ───────────────────────────────────────────────────────────────
-  { id: 601, name: 'Gaming Monitors', nameKa: 'სათამაშო მონიტორები', parentId: 600 },
-  { id: 602, name: 'Office Monitors', nameKa: 'საოფისე მონიტორები', parentId: 600 },
+  // ── Services ──────────────────────────────────────────────────────────────
+  { id: 501, name: 'PC / Laptop Assembly',      nameKa: 'PC / ლეპტოპის აწყობა',   parentId: 5 },
+  { id: 502, name: 'PC / Laptop Repair',        nameKa: 'PC / ლეპტოპის შეკეთება', parentId: 5 },
+  { id: 503, name: 'Upgrades & Custom Builds',  nameKa: 'განახლება და აწყობა',     parentId: 5 },
+  { id: 504, name: 'Data Recovery',             nameKa: 'მონაცემების აღდგენა',     parentId: 5 },
+  { id: 505, name: 'Consultation & Troubleshooting', nameKa: 'კონსულტაცია',        parentId: 5 },
 ]
 
 export function getParents(): Category[] {

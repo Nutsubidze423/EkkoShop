@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, Suspense, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowDown, ArrowRight } from 'lucide-react'
 import { ProductFilters, type FilterState } from '@/components/product/ProductFilters'
 import { ProductGrid } from '@/components/product/ProductGrid'
 import { getAllProducts } from '@/lib/api/products'
@@ -15,44 +14,67 @@ import type { Product } from '@/lib/types'
 const PAGE_SIZE = 20
 
 const FEATURED_CATEGORIES = [
-  { id: 100, label: 'Laptops', sub: 'Ultrabooks & Gaming' },
-  { id: 200, label: 'Components', sub: 'CPU, GPU & More' },
-  { id: 400, label: 'Gaming', sub: 'Consoles & Gear' },
-  { id: 600, label: 'Monitors', sub: 'Gaming & Office' },
-  { id: 300, label: 'Accessories', sub: 'Keyboards, Mice & Audio' },
-  { id: 500, label: 'Storage', sub: 'SSD, HDD & Flash' },
+  { id: 4, label: 'Gaming PCs & Laptops', sub: 'Desktops & Laptops' },
+  { id: 2, label: 'PC Hardware', sub: 'CPU, GPU & More' },
+  { id: 1, label: 'Consoles', sub: 'Gamepads & Controllers' },
+  { id: 3, label: 'Peripherals', sub: 'Monitors, Keyboards & Mice' },
 ]
+
+const TICKER_ITEMS = [
+  'GAMING PCs', 'PC HARDWARE', 'CONSOLES', 'PERIPHERALS',
+  'SERVICES', 'GPU', 'CPU', 'LAPTOPS', 'MONITORS', 'KEYBOARDS',
+  'GAMING PCs', 'PC HARDWARE', 'CONSOLES', 'PERIPHERALS',
+  'SERVICES', 'GPU', 'CPU', 'LAPTOPS', 'MONITORS', 'KEYBOARDS',
+]
+
+function BrandTicker() {
+  return (
+    <div
+      className="overflow-hidden border-y-2"
+      style={{ backgroundColor: '#5DA4C9', borderColor: '#2C2C2C' }}
+    >
+      <div className="flex items-center py-3.5 animate-marquee" style={{ width: 'max-content' }}>
+        {TICKER_ITEMS.map((item, i) => (
+          <span
+            key={i}
+            className="font-display font-black text-white uppercase whitespace-nowrap"
+            style={{ fontSize: '15px', letterSpacing: '0.2em', padding: '0 2.5rem' }}
+          >
+            {item}
+            <span style={{ marginLeft: '2.5rem', opacity: 0.3 }}>·</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 function HeroSection({ onShopNow }: { onShopNow: () => void }) {
   return (
-    <section className="relative overflow-hidden bg-surface border-b border-border">
-      {/* Background grid pattern */}
+    <section className="relative overflow-hidden" style={{ backgroundColor: '#BC2C2C' }}>
+      {/* Watermark */}
       <div
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute bottom-0 right-0 font-display font-black text-white uppercase pointer-events-none select-none"
         style={{
-          backgroundImage: `linear-gradient(#3b443d 1px, transparent 1px), linear-gradient(90deg, #3b443d 1px, transparent 1px)`,
-          backgroundSize: '80px 80px',
+          fontSize: '28vw',
+          opacity: 0.07,
+          lineHeight: 0.8,
+          letterSpacing: '-0.05em',
+          transform: 'translateX(5%)',
         }}
-      />
+      >
+        EKKO
+      </div>
 
-      {/* Accent blobs */}
-      <div
-        className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full opacity-[0.06]"
-        style={{ background: 'radial-gradient(circle, #94afe6 0%, transparent 70%)' }}
-      />
-      <div
-        className="absolute -bottom-20 -left-20 w-[400px] h-[400px] rounded-full opacity-[0.04]"
-        style={{ background: 'radial-gradient(circle, #617291 0%, transparent 70%)' }}
-      />
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-28 sm:py-40 flex flex-col lg:flex-row items-start lg:items-center gap-16 lg:gap-20">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 sm:py-32 lg:py-40 flex flex-col lg:flex-row items-start lg:items-center gap-12 lg:gap-20">
         {/* Left — text */}
         <div className="flex-1 max-w-xl">
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-            className="text-[10px] font-sans tracking-[0.3em] uppercase text-muted mb-6"
+            transition={{ duration: 0.4 }}
+            className="font-sans font-semibold text-white/50 uppercase mb-5"
+            style={{ fontSize: '10px', letterSpacing: '0.3em' }}
           >
             Premium Tech Store
           </motion.p>
@@ -60,26 +82,32 @@ function HeroSection({ onShopNow }: { onShopNow: () => void }) {
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.08, ease: [0.25, 0.1, 0.25, 1] }}
-            className="font-display text-5xl sm:text-6xl lg:text-7xl font-light text-dark leading-[1.05] tracking-wide mb-6"
+            transition={{ duration: 0.5, delay: 0.08 }}
+            className="font-display font-black text-white uppercase"
+            style={{
+              fontSize: 'clamp(3.5rem, 9vw, 7rem)',
+              lineHeight: 0.85,
+              letterSpacing: '-0.05em',
+            }}
           >
-            Engineered
-            <br />
-            <span className="italic text-secondary">to Perform.</span>
+            TECH<br />BUILT<br />
+            <span style={{ color: '#FCD758' }}>TO LAST.</span>
           </motion.h1>
 
           <motion.div
             initial={{ scaleX: 0 }}
             animate={{ scaleX: 1 }}
-            transition={{ duration: 0.5, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-            className="h-px w-16 bg-primary origin-left mb-6"
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="h-2 w-20 origin-left mt-6 mb-6"
+            style={{ backgroundColor: '#FCD758' }}
           />
 
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-            className="text-base font-sans text-secondary leading-relaxed mb-10 max-w-sm"
+            transition={{ duration: 0.4, delay: 0.35 }}
+            className="font-sans text-base max-w-sm mb-10"
+            style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.7 }}
           >
             Curated laptops, components, and peripherals — selected for quality, priced for value.
           </motion.p>
@@ -87,69 +115,95 @@ function HeroSection({ onShopNow }: { onShopNow: () => void }) {
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
-            className="flex items-center gap-4"
+            transition={{ duration: 0.4, delay: 0.45 }}
+            className="flex items-center gap-5"
           >
             <button
               onClick={onShopNow}
-              className="btn-primary px-8 py-3.5 text-sm tracking-widest uppercase flex items-center gap-2"
+              className="font-sans font-black text-white uppercase transition-all duration-200 active:scale-[0.97]"
+              style={{
+                backgroundColor: '#2C2C2C',
+                padding: '14px 32px',
+                fontSize: '11px',
+                letterSpacing: '0.12em',
+              }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = '#FCD758')}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = '#2C2C2C')}
             >
-              Shop Now
-              <ArrowDown className="w-3.5 h-3.5" />
+              SHOP NOW →
             </button>
             <Link
               href="/auth/login"
-              className="text-sm font-sans text-secondary hover:text-dark transition-colors flex items-center gap-1.5"
+              className="font-sans font-semibold uppercase transition-colors duration-200"
+              style={{ fontSize: '10px', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.55)' }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = 'white')}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.55)')}
             >
-              Sign in
-              <ArrowRight className="w-3.5 h-3.5" />
+              SIGN IN
             </Link>
           </motion.div>
         </div>
 
-        {/* Right — category grid */}
+        {/* Right — editorial offset card */}
         <motion.div
           initial={{ opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-          className="hidden lg:grid grid-cols-2 gap-2 shrink-0 w-72"
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="hidden lg:block relative shrink-0"
+          style={{ width: '340px', height: '340px' }}
         >
-          {FEATURED_CATEGORIES.map((cat, i) => (
-            <motion.button
-              key={cat.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.3 + i * 0.06, ease: [0.25, 0.1, 0.25, 1] }}
-              onClick={onShopNow}
-              className="group text-left p-4 border border-border bg-background hover:border-primary hover:bg-primary/5 transition-all duration-200"
+          {/* Shadow offset */}
+          <div
+            className="absolute inset-0 border-2"
+            style={{
+              borderColor: '#2C2C2C',
+              transform: 'translate(16px, 16px)',
+            }}
+          />
+          {/* Main card */}
+          <div
+            className="relative z-10 w-full h-full flex flex-col justify-end p-6 overflow-hidden"
+            style={{ backgroundColor: '#5DA4C9' }}
+          >
+            {/* Watermark inside card */}
+            <div
+              className="absolute inset-0 flex items-center justify-center font-display font-black text-white uppercase pointer-events-none select-none"
+              style={{ fontSize: '6rem', opacity: 0.1, letterSpacing: '-0.05em' }}
             >
-              <p className="text-sm font-display font-light text-dark group-hover:text-primary transition-colors leading-tight">
-                {cat.label}
-              </p>
-              <p className="text-[10px] font-sans text-muted mt-0.5 tracking-wide">
-                {cat.sub}
-              </p>
-            </motion.button>
-          ))}
+              SHOP
+            </div>
+            {/* Category grid */}
+            <div className="relative z-10 grid grid-cols-2 gap-2">
+              {FEATURED_CATEGORIES.slice(0, 4).map((cat, i) => (
+                <motion.button
+                  key={cat.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.4 + i * 0.06 }}
+                  onClick={onShopNow}
+                  className="text-left p-3 transition-all duration-200"
+                  style={{ border: '1px solid rgba(255,255,255,0.3)' }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'white'
+                    ;(e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,255,255,0.15)'
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.3)'
+                    ;(e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'
+                  }}
+                >
+                  <p className="font-display font-black text-white uppercase text-xs leading-tight" style={{ letterSpacing: '-0.02em' }}>
+                    {cat.label}
+                  </p>
+                  <p className="font-sans text-[9px] uppercase mt-0.5 tracking-wide" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                    {cat.sub}
+                  </p>
+                </motion.button>
+              ))}
+            </div>
+          </div>
         </motion.div>
       </div>
-
-      {/* Scroll hint */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.8 }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 cursor-pointer"
-        onClick={onShopNow}
-      >
-        <span className="text-[9px] font-sans tracking-[0.25em] uppercase text-muted">Scroll</span>
-        <motion.div
-          animate={{ y: [0, 4, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-        >
-          <ArrowDown className="w-3.5 h-3.5 text-muted" />
-        </motion.div>
-      </motion.div>
     </section>
   )
 }
@@ -217,13 +271,24 @@ function CatalogContent() {
   return (
     <>
       <HeroSection onShopNow={scrollToCatalog} />
+      <BrandTicker />
 
-      <main ref={catalogRef} className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+      <main ref={catalogRef} className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+        {/* Catalog heading */}
         <div className="mb-10">
-          <h2 className="font-display text-4xl sm:text-5xl font-light text-dark tracking-wide">
+          <p
+            className="font-sans font-black uppercase mb-3"
+            style={{ fontSize: '10px', letterSpacing: '0.15em', color: '#BC2C2C' }}
+          >
+            Browse All
+          </p>
+          <h2
+            className="font-display font-black text-dark uppercase"
+            style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', lineHeight: 0.85, letterSpacing: '-0.05em' }}
+          >
             {t('catalog.title')}
           </h2>
-          <div className="mt-3 h-px w-16 bg-primary" />
+          <div className="mt-4 h-1.5 w-16" style={{ backgroundColor: '#BC2C2C' }} />
         </div>
 
         <div className="flex gap-10">

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -11,54 +11,58 @@
 }
 
 :root {
-  --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-display: 'Montserrat', system-ui, sans-serif;
+  --font-sans: 'Open Sans', system-ui, sans-serif;
 }
 
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: #f7f6f4;
-  color: #3b443d;
+  background-color: #F5F1E3;
+  color: #2C2C2C;
   line-height: 1.6;
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #d6d2cd; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #b8b4af; }
+::-webkit-scrollbar-thumb { background: #C8C2B0; border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: #2C2C2C; }
 
 /* Selection */
-::selection { background: #94afe640; color: #3b443d; }
+::selection { background: #BC2C2C; color: #F5F1E3; }
 
 /* Focus ring */
 :focus-visible {
-  outline: 2px solid #94afe6;
+  outline: 2px solid #2C2C2C;
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 /* Shimmer skeleton */
 .skeleton {
-  background: linear-gradient(90deg, #ede9e4 25%, #f5f2ee 50%, #ede9e4 75%);
+  background: linear-gradient(90deg, #e8e2d3 25%, #f0ead9 50%, #e8e2d3 75%);
   background-size: 600px 100%;
   animation: shimmer 1.6s infinite linear;
 }
 
+/* Grayscale image — color reveals on card hover */
+.retro-img {
+  filter: grayscale(100%);
+  transition: filter 500ms ease-in-out;
+}
+.group:hover .retro-img {
+  filter: grayscale(0%);
+}
+
 @layer utilities {
   .font-display { font-family: var(--font-display); }
-
-  /* Luxury number formatting */
   .tabular-nums { font-variant-numeric: tabular-nums; }
-
-  /* Hide scrollbar but keep scrollable */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -73,66 +77,71 @@ body {
   }
   .input-floating input,
   .input-floating textarea {
-    @apply w-full pt-6 pb-2 px-0 bg-transparent border-0 border-b border-border
-           text-dark placeholder-transparent focus:outline-none focus:border-primary
+    @apply w-full pt-6 pb-2 px-0 bg-transparent border-0 border-b-2 border-[#2C2C2C]
+           text-[#2C2C2C] placeholder-transparent focus:outline-none focus:border-[#BC2C2C]
            transition-colors duration-200;
     font-family: var(--font-sans);
     font-size: 0.9375rem;
   }
   .input-floating label {
-    @apply absolute left-0 top-2 text-xs text-muted font-medium tracking-wide uppercase
+    @apply absolute left-0 top-2 text-[10px] text-[#888] font-semibold tracking-widest uppercase
            pointer-events-none transition-all duration-200;
     font-family: var(--font-sans);
+    letter-spacing: 0.1em;
   }
   .input-floating input:placeholder-shown + label,
   .input-floating textarea:placeholder-shown + label {
-    @apply top-4 text-sm normal-case tracking-normal font-normal text-muted;
+    @apply top-4 text-sm normal-case tracking-normal font-normal text-[#888];
+    letter-spacing: 0;
   }
 
   /* Primary button */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-danger text-white
-           font-medium text-sm tracking-wide rounded-none
-           transition-all duration-200 hover:bg-danger-dark active:scale-[0.98]
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#2C2C2C] text-white
+           font-semibold text-[11px] uppercase rounded-none
+           transition-all duration-200 hover:bg-[#BC2C2C] active:scale-[0.98]
            disabled:opacity-50 disabled:cursor-not-allowed;
     font-family: var(--font-sans);
+    letter-spacing: 0.1em;
   }
 
   /* Secondary / ghost button */
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent
-           border border-dark text-dark font-medium text-sm tracking-wide rounded-none
-           transition-all duration-200 hover:bg-dark hover:text-white active:scale-[0.98]
+           border-2 border-[#2C2C2C] text-[#2C2C2C] font-semibold text-[11px] uppercase rounded-none
+           transition-all duration-200 hover:bg-[#2C2C2C] hover:text-white active:scale-[0.98]
            disabled:opacity-50 disabled:cursor-not-allowed;
     font-family: var(--font-sans);
+    letter-spacing: 0.1em;
   }
 
   /* Ghost icon button */
   .btn-icon {
-    @apply inline-flex items-center justify-center w-10 h-10 rounded-full
-           text-secondary transition-all duration-150
-           hover:bg-border hover:text-dark active:scale-95;
+    @apply inline-flex items-center justify-center w-10 h-10 rounded-none
+           text-[#2C2C2C] transition-all duration-150
+           hover:bg-[#2C2C2C] hover:text-white active:scale-95;
   }
 
   /* Product card */
   .product-card {
-    @apply bg-surface border border-border transition-all duration-300;
-    box-shadow: 0 1px 3px rgba(59,68,61,0.06), 0 4px 16px rgba(59,68,61,0.04);
+    @apply bg-white border border-[#2C2C2C] transition-all duration-300;
   }
   .product-card:hover {
-    box-shadow: 0 4px 12px rgba(59,68,61,0.10), 0 12px 32px rgba(59,68,61,0.08);
     transform: translateY(-2px);
+    box-shadow: 6px 6px 0 #2C2C2C;
   }
 
   /* Badge */
   .badge-count {
-    @apply absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-danger text-white
-           text-[10px] font-semibold rounded-full flex items-center justify-center px-1;
+    @apply absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-white text-[#BC2C2C]
+           text-[8px] font-black rounded-none flex items-center justify-center px-1;
     font-family: var(--font-sans);
   }
 
   /* Section heading */
   .heading-display {
-    @apply font-display font-light tracking-wide text-dark;
+    @apply font-display font-black text-[#2C2C2C] uppercase;
+    line-height: 0.85;
+    letter-spacing: -0.05em;
   }
 }

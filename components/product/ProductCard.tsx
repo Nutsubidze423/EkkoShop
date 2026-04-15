@@ -71,7 +71,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.04, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={{ duration: 0.3, delay: index * 0.04 }}
     >
       <Link href={`/product/${product.productId}`} className="block product-card group">
         {/* Image */}
@@ -80,26 +80,30 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             urls={images}
             alt={product.name}
             aspectRatio="aspect-[4/3]"
+            grayscale={true}
           />
 
           {/* Wishlist */}
           <button
             onClick={handleWishlistToggle}
-            className={`absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-surface/90 shadow transition-all duration-200 hover:bg-surface ${
+            className={`absolute top-2 right-2 w-8 h-8 flex items-center justify-center transition-all duration-200 ${
               inWishlist ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
             }`}
+            style={{ backgroundColor: inWishlist ? '#BC2C2C' : '#2C2C2C' }}
             aria-label={inWishlist ? t('product.removeFromWishlist') : t('product.addToWishlist')}
           >
             <Heart
-              className={`w-4 h-4 transition-colors duration-200 ${
-                inWishlist ? 'fill-danger text-danger' : 'text-dark'
-              }`}
+              className="w-4 h-4"
+              style={{ color: 'white', fill: inWishlist ? 'white' : 'none' }}
             />
           </button>
 
-          {/* Stock badge */}
+          {/* Out of stock badge */}
           {!inStock && (
-            <div className="absolute top-3 left-3 bg-dark/70 text-white text-[10px] font-medium px-2 py-0.5 font-sans tracking-wide">
+            <div
+              className="absolute top-2 left-2 font-sans font-black text-white text-[9px] uppercase px-2 py-1"
+              style={{ backgroundColor: '#2C2C2C', letterSpacing: '0.1em' }}
+            >
               {t('product.outOfStock')}
             </div>
           )}
@@ -108,36 +112,45 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         {/* Info */}
         <div className="p-4">
           {/* Category */}
-          <p className="text-[10px] text-muted font-sans tracking-widest uppercase mb-1">
+          <p
+            className="font-sans font-black uppercase mb-1"
+            style={{ fontSize: '10px', color: '#BC2C2C', letterSpacing: '0.1em' }}
+          >
             {product.categoryName}
           </p>
 
           {/* Name */}
-          <h3 className="font-display text-lg font-light text-dark leading-snug mb-2 line-clamp-2 group-hover:text-secondary transition-colors duration-200">
+          <h3
+            className="font-display font-black text-dark uppercase leading-tight mb-3 line-clamp-2 transition-colors duration-200 group-hover:text-[#BC2C2C]"
+            style={{ fontSize: '13px', letterSpacing: '-0.02em' }}
+          >
             {product.name}
           </h3>
 
           {/* Price + CTA */}
-          <div className="flex items-center justify-between gap-2 mt-3">
-            <span className="font-sans text-base font-medium text-dark tabular-nums">
+          <div className="flex items-center justify-between gap-2">
+            <span
+              className="font-display font-black text-dark tabular-nums"
+              style={{ fontSize: '1rem', letterSpacing: '-0.02em' }}
+            >
               {t('common.currency')}{product.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
 
             <button
               onClick={handleAddToCart}
               disabled={!inStock || addedToCart}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium font-sans tracking-wide transition-all duration-200 ${
-                addedToCart
-                  ? 'bg-primary/20 text-primary cursor-default'
-                  : inStock
-                  ? 'bg-dark text-white hover:bg-secondary'
-                  : 'bg-border text-muted cursor-not-allowed'
-              }`}
+              className="flex items-center gap-1.5 px-3 py-2 font-sans font-black text-[10px] uppercase transition-all duration-200"
+              style={{
+                letterSpacing: '0.08em',
+                backgroundColor: addedToCart ? '#5DA4C9' : inStock ? '#2C2C2C' : '#C8C2B0',
+                color: 'white',
+                cursor: !inStock || addedToCart ? 'not-allowed' : 'pointer',
+              }}
             >
               {addedToCart ? (
-                <><Check className="w-3.5 h-3.5" />{t('product.addedToCart')}</>
+                <><Check className="w-3 h-3" />{t('product.addedToCart')}</>
               ) : (
-                <><ShoppingBag className="w-3.5 h-3.5" />{t('product.addToCart')}</>
+                <><ShoppingBag className="w-3 h-3" />{t('product.addToCart')}</>
               )}
             </button>
           </div>

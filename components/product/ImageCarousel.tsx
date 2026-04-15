@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 interface ImageCarouselProps {
@@ -9,6 +9,7 @@ interface ImageCarouselProps {
   alt: string
   className?: string
   aspectRatio?: string
+  grayscale?: boolean
 }
 
 export function ImageCarousel({
@@ -16,6 +17,7 @@ export function ImageCarousel({
   alt,
   className = '',
   aspectRatio = 'aspect-[4/3]',
+  grayscale = false,
 }: ImageCarouselProps) {
   const [index, setIndex] = useState(0)
   const [lightbox, setLightbox] = useState(false)
@@ -27,7 +29,6 @@ export function ImageCarousel({
   const prev = useCallback(() => setIndex((i) => (i - 1 + images.length) % images.length), [images.length])
   const next = useCallback(() => setIndex((i) => (i + 1) % images.length), [images.length])
 
-  // Keyboard nav for lightbox
   useEffect(() => {
     if (!lightbox) return
     const handler = (e: KeyboardEvent) => {
@@ -68,42 +69,43 @@ export function ImageCarousel({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Image */}
         <img
           src={images[index]}
           alt={`${alt} ${index + 1}`}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02] cursor-zoom-in"
+          className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03] cursor-zoom-in${grayscale ? ' retro-img' : ''}`}
           onClick={() => setLightbox(true)}
           loading="lazy"
         />
 
-        {/* Prev / Next */}
         {images.length > 1 && (
           <>
             <button
               onClick={(e) => { e.stopPropagation(); prev() }}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 bg-surface/90 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-surface"
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              style={{ backgroundColor: '#2C2C2C' }}
               aria-label="Previous image"
             >
-              <ChevronLeft className="w-4 h-4 text-dark" />
+              <ChevronLeft className="w-4 h-4 text-white" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); next() }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 bg-surface/90 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-surface"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              style={{ backgroundColor: '#2C2C2C' }}
               aria-label="Next image"
             >
-              <ChevronRight className="w-4 h-4 text-dark" />
+              <ChevronRight className="w-4 h-4 text-white" />
             </button>
 
-            {/* Dots */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
               {images.map((_, i) => (
                 <button
                   key={i}
                   onClick={(e) => { e.stopPropagation(); setIndex(i) }}
-                  className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
-                    i === index ? 'bg-surface w-4' : 'bg-surface/50'
-                  }`}
+                  className="h-1 transition-all duration-200"
+                  style={{
+                    width: i === index ? '16px' : '6px',
+                    backgroundColor: i === index ? '#BC2C2C' : 'rgba(255,255,255,0.6)',
+                  }}
                   aria-label={`Image ${i + 1}`}
                 />
               ))}
@@ -111,20 +113,16 @@ export function ImageCarousel({
           </>
         )}
 
-        {/* Count badge */}
         {images.length > 1 && (
-          <div className="absolute top-2 right-2 bg-dark/60 text-white text-[10px] font-medium px-2 py-0.5 font-sans">
+          <div
+            className="absolute top-2 right-2 font-sans font-black text-[9px]"
+            style={{ backgroundColor: '#2C2C2C', color: 'white', padding: '2px 6px', letterSpacing: '0.05em' }}
+          >
             {index + 1}/{images.length}
           </div>
         )}
-
-        {/* Zoom hint */}
-        <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <ZoomIn className="w-4 h-4 text-white drop-shadow" />
-        </div>
       </div>
 
-      {/* Lightbox */}
       <AnimatePresence>
         {lightbox && (
           <motion.div
@@ -132,11 +130,13 @@ export function ImageCarousel({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[950] bg-dark/95 flex items-center justify-center"
+            className="fixed inset-0 z-[950] flex items-center justify-center"
+            style={{ backgroundColor: 'rgba(44,44,44,0.97)' }}
             onClick={() => setLightbox(false)}
           >
             <button
-              className="absolute top-4 right-4 btn-icon bg-surface/10 hover:bg-surface/20 text-white"
+              className="absolute top-4 right-4 inline-flex items-center justify-center w-10 h-10 text-white transition-colors"
+              style={{ backgroundColor: '#BC2C2C' }}
               onClick={() => setLightbox(false)}
               aria-label="Close lightbox"
             >
@@ -147,14 +147,16 @@ export function ImageCarousel({
               <>
                 <button
                   onClick={(e) => { e.stopPropagation(); prev() }}
-                  className="absolute left-4 btn-icon bg-surface/10 hover:bg-surface/20 text-white"
+                  className="absolute left-4 inline-flex items-center justify-center w-10 h-10 text-white transition-colors"
+                  style={{ backgroundColor: '#2C2C2C' }}
                   aria-label="Previous"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); next() }}
-                  className="absolute right-4 btn-icon bg-surface/10 hover:bg-surface/20 text-white"
+                  className="absolute right-4 inline-flex items-center justify-center w-10 h-10 text-white transition-colors"
+                  style={{ backgroundColor: '#2C2C2C' }}
                   aria-label="Next"
                 >
                   <ChevronRight className="w-5 h-5" />
@@ -179,9 +181,11 @@ export function ImageCarousel({
                   <button
                     key={i}
                     onClick={(e) => { e.stopPropagation(); setIndex(i) }}
-                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                      i === index ? 'bg-white w-6' : 'bg-white/40'
-                    }`}
+                    className="h-1 transition-all duration-200"
+                    style={{
+                      width: i === index ? '24px' : '8px',
+                      backgroundColor: i === index ? '#BC2C2C' : 'rgba(255,255,255,0.3)',
+                    }}
                   />
                 ))}
               </div>
