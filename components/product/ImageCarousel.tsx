@@ -73,7 +73,7 @@ export function ImageCarousel({
           src={images[index]}
           alt={`${alt} ${index + 1}`}
           className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03] cursor-zoom-in${grayscale ? ' retro-img' : ''}`}
-          onClick={() => setLightbox(true)}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLightbox(true) }}
           loading="lazy"
         />
 

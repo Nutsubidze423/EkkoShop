@@ -228,6 +228,45 @@ export function ProductFilters({ filters, onChange, total }: ProductFiltersProps
             {t('catalog.price')}
           </p>
 
+          {/* Manual price inputs */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex-1 flex items-center gap-1 border-b-2 pb-1" style={{ borderColor: '#C8C2B0' }}>
+              <span className="font-sans font-black shrink-0" style={{ fontSize: '10px', color: '#BC2C2C' }}>
+                {t('common.currency')}
+              </span>
+              <input
+                type="number"
+                min={0}
+                max={sliderMax - 1}
+                value={sliderMin}
+                onChange={(e) => {
+                  const v = Number(e.target.value)
+                  if (!isNaN(v)) setSliderMin(Math.min(Math.max(0, v), sliderMax - 1))
+                }}
+                className="w-full bg-transparent outline-none font-sans font-black tabular-nums appearance-none"
+                style={{ fontSize: '11px', color: '#2C2C2C' }}
+              />
+            </div>
+            <span className="font-sans shrink-0" style={{ fontSize: '10px', color: '#C8C2B0' }}>—</span>
+            <div className="flex-1 flex items-center gap-1 border-b-2 pb-1" style={{ borderColor: '#C8C2B0' }}>
+              <span className="font-sans font-black shrink-0" style={{ fontSize: '10px', color: '#BC2C2C' }}>
+                {t('common.currency')}
+              </span>
+              <input
+                type="number"
+                min={sliderMin + 1}
+                max={PRICE_MAX}
+                value={sliderMax}
+                onChange={(e) => {
+                  const v = Number(e.target.value)
+                  if (!isNaN(v)) setSliderMax(Math.min(Math.max(sliderMin + 1, v), PRICE_MAX))
+                }}
+                className="w-full bg-transparent outline-none font-sans font-black tabular-nums appearance-none"
+                style={{ fontSize: '11px', color: '#2C2C2C' }}
+              />
+            </div>
+          </div>
+
           {/* Track + dual slider */}
           <div className="relative mb-5" style={{ height: '20px' }}>
             {/* Visual track */}
@@ -279,24 +318,6 @@ export function ProductFilters({ filters, onChange, total }: ProductFiltersProps
               }}
               className="price-slider"
             />
-          </div>
-
-          {/* Range labels */}
-          <div className="flex items-center justify-between mb-3">
-            <span
-              className="font-sans font-black tabular-nums"
-              style={{ fontSize: '11px', color: '#2C2C2C' }}
-            >
-              {t('common.currency')}{sliderMin.toLocaleString()}
-            </span>
-            <span
-              className="font-sans font-black tabular-nums"
-              style={{ fontSize: '11px', color: '#2C2C2C' }}
-            >
-              {sliderMax < PRICE_MAX
-                ? `${t('common.currency')}${sliderMax.toLocaleString()}`
-                : `${t('common.currency')}${PRICE_MAX.toLocaleString()}+`}
-            </span>
           </div>
 
           {/* Apply button */}
