@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, Suspense, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ProductFilters, type FilterState } from '@/components/product/ProductFilters'
@@ -50,8 +50,8 @@ function BrandTicker() {
   )
 }
 
-function HeroSection({ onShopNow }: { onShopNow: () => void }) {
-  const { user } = useAuthStore()
+function HeroSection({ onShopNow, onCategoryClick }: { onShopNow: () => void; onCategoryClick: (id: number) => void }) {
+  const { user, hydrated } = useAuthStore()
   return (
     <section className="relative overflow-hidden" style={{ backgroundColor: '#BC2C2C' }}>
       {/* Watermark */}
@@ -134,7 +134,7 @@ function HeroSection({ onShopNow }: { onShopNow: () => void }) {
             >
               SHOP NOW →
             </button>
-            {!user && (
+            {hydrated && !user && (
               <Link
                 href="/auth/login"
                 className="font-sans font-semibold uppercase transition-colors duration-200"
@@ -184,7 +184,7 @@ function HeroSection({ onShopNow }: { onShopNow: () => void }) {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.4 + i * 0.06 }}
-                  onClick={onShopNow}
+                  onClick={() => onCategoryClick(cat.id)}
                   className="text-left p-3 transition-all duration-200"
                   style={{ border: '1px solid rgba(255,255,255,0.3)' }}
                   onMouseEnter={(e) => {
@@ -214,6 +214,8 @@ function HeroSection({ onShopNow }: { onShopNow: () => void }) {
 
 function CatalogContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
   const { t } = useTranslation()
   const catalogRef = useRef<HTMLDivElement>(null)
 
@@ -226,9 +228,9 @@ function CatalogContent() {
   const [filters, setFilters] = useState<FilterState>({
     search: searchParams.get('search') ?? '',
     categoryId: searchParams.get('categoryId') ? parseInt(searchParams.get('categoryId')!) : undefined,
-    minPrice: '',
-    maxPrice: '',
-    available: false,
+    minPrice: searchParams.get('minPrice') ?? '',
+    maxPrice: searchParams.get('maxPrice') ?? '',
+    available: searchParams.get('available') === '1',
   })
 
   const debouncedSearch = useDebounce(filters.search, 400)
@@ -268,13 +270,30 @@ function CatalogContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (filters.search) params.set('search', filters.search)
+    if (filters.categoryId !== undefined) params.set('categoryId', String(filters.categoryId))
+    if (filters.minPrice) params.set('minPrice', filters.minPrice)
+    if (filters.maxPrice) params.set('maxPrice', filters.maxPrice)
+    if (filters.available) params.set('available', '1')
+    const qs = params.toString()
+    router.replace(`${pathname}${qs ? '?' + qs : ''}`, { scroll: false })
+  }, [filters, pathname, router])
+
   const scrollToCatalog = () => {
     catalogRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const handleCategoryClick = (id: number) => {
+    setFilters((f) => ({ ...f, categoryId: id }))
+    setPage(1)
+    scrollToCatalog()
+  }
+
   return (
     <>
-      <HeroSection onShopNow={scrollToCatalog} />
+      <HeroSection onShopNow={scrollToCatalog} onCategoryClick={handleCategoryClick} />
       <BrandTicker />
 
       <main ref={catalogRef} className="max-w-7xl mx-auto px-4 sm:px-6 py-12">

@@ -1,6 +1,6 @@
 'use client'
 
-import { X } from 'lucide-react'
+import { Minus, Plus, X } from 'lucide-react'
 import { useCartStore } from '@/store/cartStore'
 import { useTranslation } from '@/lib/i18n'
 import type { CartItem as CartItemType } from '@/lib/types'
@@ -11,7 +11,7 @@ interface CartItemProps {
 }
 
 export function CartItem({ item, userId }: CartItemProps) {
-  const { removeItem } = useCartStore()
+  const { removeItem, incrementItem, decrementItem } = useCartStore()
   const { t } = useTranslation()
   const image = item.imageUrls?.[0]
 
@@ -35,21 +35,64 @@ export function CartItem({ item, userId }: CartItemProps) {
           {item.productName}
         </p>
         <div className="flex items-center justify-between mt-3">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-sans text-muted">
-              {t('product.qty')}: {item.amount}
+          {/* Qty stepper */}
+          <div className="flex items-center gap-0">
+            <button
+              onClick={() => decrementItem(item.productId, userId)}
+              className="w-7 h-7 border border-border flex items-center justify-center transition-colors"
+              style={{ color: '#888' }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#2C2C2C'
+                ;(e.currentTarget as HTMLButtonElement).style.color = 'white'
+                ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#2C2C2C'
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'
+                ;(e.currentTarget as HTMLButtonElement).style.color = '#888'
+                ;(e.currentTarget as HTMLButtonElement).style.borderColor = ''
+              }}
+              aria-label="Decrease quantity"
+            >
+              <Minus className="w-3 h-3" />
+            </button>
+            <span
+              className="w-8 h-7 flex items-center justify-center font-sans font-black tabular-nums border-y border-border"
+              style={{ fontSize: '12px', color: '#2C2C2C' }}
+            >
+              {item.amount}
             </span>
+            <button
+              onClick={() => incrementItem(item.productId, userId)}
+              className="w-7 h-7 border border-border flex items-center justify-center transition-colors"
+              style={{ color: '#888' }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#2C2C2C'
+                ;(e.currentTarget as HTMLButtonElement).style.color = 'white'
+                ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#2C2C2C'
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'
+                ;(e.currentTarget as HTMLButtonElement).style.color = '#888'
+                ;(e.currentTarget as HTMLButtonElement).style.borderColor = ''
+              }}
+              aria-label="Increase quantity"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4">
             <span className="font-sans text-sm font-medium text-dark tabular-nums">
               {t('common.currency')}{(item.price * item.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </span>
+            <button
+              onClick={() => removeItem(item.productId, userId)}
+              className="text-muted hover:text-danger transition-colors"
+              aria-label={t('cart.remove')}
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            onClick={() => removeItem(item.productId, userId)}
-            className="text-muted hover:text-danger transition-colors"
-            aria-label={t('cart.remove')}
-          >
-            <X className="w-4 h-4" />
-          </button>
         </div>
       </div>
     </div>

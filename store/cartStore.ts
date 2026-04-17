@@ -9,6 +9,8 @@ interface CartState {
   setItems: (items: CartItem[]) => void
   addItem: (item: CartItem) => Promise<void>
   removeItem: (productId: number, userId: number) => Promise<void>
+  incrementItem: (productId: number, userId: number) => Promise<void>
+  decrementItem: (productId: number, userId: number) => Promise<void>
   clear: () => void
 }
 
@@ -48,6 +50,42 @@ export const useCartStore = create<CartState>()((set, get) => ({
       set({ items: prev, count: prev.reduce((acc, i) => acc + i.amount, 0) })
       const msg = err instanceof Error ? err.message : 'Failed to remove from cart'
       toast.error(msg)
+    }
+  },
+
+  incrementItem: async (productId, userId) => {
+    const prev = get().items
+    const next = prev.map((i) => i.productId === productId ? { ...i, amount: i.amount + 1 } : i)
+    set({ items: next, count: next.reduce((acc, i) => acc + i.amount, 0) })
+
+    try {
+      await apiAddToCart(productId, userId, 1)
+    } catch (err: unknown) {
+      set({ items: prev, count: prev.reduce((acc, i) => acc + i.amount, 0) })
+      toast.error(err instanceof Error ? err.message : 'Failed to update cart')
+    }
+  },
+
+  decrementItem: async (productId, userId) => {
+    const prev = get().items
+    const item = prev.find((i) => i.productId === productId)
+    if (!item) return
+
+    if (item.amount === 1) {
+      await get().removeItem(productId, userId)
+      return
+    }
+
+    const newAmount = item.amount - 1
+    const next = prev.map((i) => i.productId === productId ? { ...i, amount: newAmount } : i)
+    set({ items: next, count: next.reduce((acc, i) => acc + i.amount, 0) })
+
+    try {
+      await apiRemoveFromCart(userId, productId)
+      await apiAddToCart(productId, userId, newAmount)
+    } catch (err: unknown) {
+      set({ items: prev, count: prev.reduce((acc, i) => acc + i.amount, 0) })
+      toast.error(err instanceof Error ? err.message : 'Failed to update cart')
     }
   },
 

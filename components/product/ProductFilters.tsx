@@ -55,6 +55,13 @@ export function ProductFilters({ filters, onChange, total }: ProductFiltersProps
   const hasFilters =
     !!filters.search || filters.categoryId !== undefined || !!filters.minPrice || !!filters.maxPrice || filters.available
 
+  const filterCount = [
+    !!filters.search,
+    filters.categoryId !== undefined,
+    !!filters.minPrice || !!filters.maxPrice,
+    filters.available,
+  ].filter(Boolean).length
+
   const leftPct = (sliderMin / PRICE_MAX) * 100
   const rightPct = ((PRICE_MAX - sliderMax) / PRICE_MAX) * 100
 
@@ -280,13 +287,15 @@ export function ProductFilters({ filters, onChange, total }: ProductFiltersProps
               className="font-sans font-black tabular-nums"
               style={{ fontSize: '11px', color: '#2C2C2C' }}
             >
-              ${sliderMin.toLocaleString()}
+              {t('common.currency')}{sliderMin.toLocaleString()}
             </span>
             <span
               className="font-sans font-black tabular-nums"
               style={{ fontSize: '11px', color: '#2C2C2C' }}
             >
-              {sliderMax < PRICE_MAX ? `$${sliderMax.toLocaleString()}` : `$${PRICE_MAX.toLocaleString()}+`}
+              {sliderMax < PRICE_MAX
+                ? `${t('common.currency')}${sliderMax.toLocaleString()}`
+                : `${t('common.currency')}${PRICE_MAX.toLocaleString()}+`}
             </span>
           </div>
 
@@ -380,7 +389,7 @@ export function ProductFilters({ filters, onChange, total }: ProductFiltersProps
               className="w-4 h-4 font-black font-sans text-[9px] flex items-center justify-center"
               style={{ backgroundColor: '#BC2C2C', color: 'white' }}
             >
-              !
+              {filterCount}
             </span>
           )}
         </button>

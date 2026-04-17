@@ -113,9 +113,9 @@ export default function CartPage() {
                 </span>
               </div>
 
-              <button className="btn-primary w-full py-4 text-sm tracking-widest uppercase">
+              <Link href="/checkout" className="btn-primary w-full py-4 text-sm tracking-widest uppercase">
                 {t('cart.checkout')}
-              </button>
+              </Link>
             </div>
           </div>
         </div>

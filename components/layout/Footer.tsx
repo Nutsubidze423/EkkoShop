@@ -18,8 +18,8 @@ const NAV_LINKS = {
     { label: 'Cart', href: '/cart' },
   ],
   Info: [
-    { label: 'About', href: '/' },
-    { label: 'Contact', href: '/' },
+    { label: 'About', href: '/about' },
+    { label: 'Contact', href: '/contact' },
     { label: 'Shipping', href: '/' },
     { label: 'Returns', href: '/' },
     { label: 'Privacy', href: '/' },

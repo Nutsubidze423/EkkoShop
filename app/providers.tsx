@@ -6,6 +6,7 @@ import { useCartStore } from '@/store/cartStore'
 import { useWishlistStore } from '@/store/wishlistStore'
 import { hydrateI18n } from '@/lib/i18n'
 import { getCart, getWishlist } from '@/lib/api/products'
+import { SplashScreen } from '@/components/ui/SplashScreen'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const hydrate = useAuthStore((s) => s.hydrate)
@@ -31,5 +32,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
       .catch(() => {})
   }, [user, token, setCartItems, setWishlistItems])
 
-  return <>{children}</>
+  return (
+    <>
+      <SplashScreen />
+      {children}
+    </>
+  )
 }
