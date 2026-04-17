@@ -42,17 +42,49 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex">
       {/* Left decorative panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-dark items-center justify-center p-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="absolute border border-white/20 rounded-full"
-              style={{ width: `${(i + 1) * 120}px`, height: `${(i + 1) * 120}px`,
-                top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
-          ))}
+      <div
+        className="hidden lg:flex lg:w-1/2 items-center justify-center relative overflow-hidden"
+        style={{ backgroundColor: '#BC2C2C' }}
+      >
+        {/* Grid texture */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(0,0,0,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.07) 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }}
+        />
+        {/* Watermark */}
+        <div
+          className="absolute bottom-0 right-0 font-display font-black uppercase pointer-events-none select-none"
+          style={{ fontSize: '30vw', opacity: 0.07, lineHeight: 0.8, letterSpacing: '-0.05em', color: 'white', transform: 'translateX(8%)' }}
+        >
+          EKKO
         </div>
-        <div className="relative z-10 text-center">
-          <h2 className="font-display text-5xl font-light text-white tracking-[0.15em] mb-4">EKKO</h2>
-          <p className="font-sans text-white/50 text-sm tracking-widest uppercase">Premium Tech Store</p>
+        {/* Content */}
+        <div className="relative z-10 text-center px-16">
+          <Link href="/">
+            <span
+              className="font-display font-black uppercase block select-none"
+              style={{ fontSize: 'clamp(3rem, 4.5vw, 5rem)', lineHeight: 0.85, letterSpacing: '-0.05em' }}
+            >
+              <span style={{ color: 'white' }}>EKKO</span>
+              <span style={{ color: '#FCD758' }}>SHOP</span>
+            </span>
+          </Link>
+          <p
+            className="font-sans font-semibold uppercase select-none mt-6"
+            style={{ fontSize: '10px', letterSpacing: '0.3em', color: 'rgba(255,255,255,0.5)' }}
+          >
+            Premium Tech Store
+          </p>
+          <div className="mt-10 h-px w-12 mx-auto" style={{ backgroundColor: 'rgba(255,255,255,0.25)' }} />
+          <p
+            className="font-sans mt-6 max-w-xs mx-auto"
+            style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.8, letterSpacing: '0.01em' }}
+          >
+            Premium tech, curated for performance. Laptops, components, and peripherals — selected for quality.
+          </p>
         </div>
       </div>
 
