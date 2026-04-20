@@ -68,10 +68,15 @@ export async function apiRequest<T>(
   return JSON.parse(text) as T
 }
 
-export function buildQuery(params: Record<string, string | number | boolean | undefined>): string {
-  const q = Object.entries(params)
-    .filter(([, v]) => v !== undefined && v !== '' && v !== null)
-    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
-    .join('&')
-  return q ? `?${q}` : ''
+export function buildQuery(params: Record<string, string | number | boolean | number[] | undefined>): string {
+  const parts: string[] = []
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === '' || v === null) continue
+    if (Array.isArray(v)) {
+      for (const item of v) parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(item)}`)
+    } else {
+      parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+    }
+  }
+  return parts.length ? `?${parts.join('&')}` : ''
 }

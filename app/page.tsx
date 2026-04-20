@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { ProductFilters, type FilterState } from '@/components/product/ProductFilters'
 import { ProductGrid } from '@/components/product/ProductGrid'
 import { getAllProducts } from '@/lib/api/products'
+import { getDescendantIds } from '@/lib/categories'
 import { useTranslation } from '@/lib/i18n'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useAuthStore } from '@/store/authStore'
@@ -240,9 +241,12 @@ function CatalogContent() {
   const fetchProducts = useCallback(async (p: number) => {
     setLoading(true)
     try {
+      const expandedCategory = filters.categoryId !== undefined
+        ? (() => { const ids = getDescendantIds(filters.categoryId); return ids.length === 1 ? ids[0] : ids })()
+        : undefined
       const res = await getAllProducts({
         Search: debouncedSearch || undefined,
-        CategoryId: filters.categoryId,
+        CategoryId: expandedCategory,
         MinPrice: debouncedMin ? parseFloat(debouncedMin) : undefined,
         MaxPrice: debouncedMax ? parseFloat(debouncedMax) : undefined,
         Available: filters.available || undefined,

@@ -62,3 +62,9 @@ export function getChildren(parentId: number): Category[] {
 export function getCategoryById(id: number): Category | undefined {
   return CATEGORIES.find((c) => c.id === id)
 }
+
+export function getDescendantIds(id: number): number[] {
+  const children = getChildren(id)
+  if (children.length === 0) return [id]
+  return children.flatMap((c) => getDescendantIds(c.id))
+}

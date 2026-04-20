@@ -49,10 +49,10 @@ export default function ProductPage() {
     try {
       const [productRes, urlsRes] = await Promise.all([
         getProduct(Number(id)),
-        getImageUrls(Number(id)).catch(() => ({ success: true as const, urls: [] })),
+        getImageUrls(Number(id)).catch(() => ({ productId: Number(id), imageUrls: [] })),
       ])
       setProduct(productRes.value)
-      setImageUrls(urlsRes.urls ?? [])
+      setImageUrls(urlsRes.imageUrls ?? [])
       setEditForm({
         name: productRes.value.name,
         description: productRes.value.description,

@@ -77,8 +77,8 @@ export interface CartItem {
 }
 
 export interface ImageUrlsResponse {
-  success: true
-  urls: string[]
+  productId: number
+  imageUrls: string[]
 }
 
 export interface CreateProductResponse {
@@ -98,7 +98,7 @@ export interface ApiErrorShape {
 
 export interface ProductsQuery {
   Search?: string
-  CategoryId?: number
+  CategoryId?: number | number[]
   MinPrice?: number
   MaxPrice?: number
   Available?: boolean
@@ -115,6 +115,7 @@ export interface WishlistQuery {
 
 export interface CartQuery {
   UserId: number
+  Available?: boolean
   Page: number
   PageSize: number
 }

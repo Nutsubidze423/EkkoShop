@@ -21,7 +21,7 @@ export async function getProduct(id: number): Promise<{ success: true; value: Pr
 export async function getAllProducts(
   query: ProductsQuery
 ): Promise<{ success: true; value: PaginatedResponse<Product> }> {
-  return apiRequest(`/api/Products/All${buildQuery(query as unknown as Record<string, string | number | boolean | undefined>)}`)
+  return apiRequest(`/api/Products/All${buildQuery(query as unknown as Record<string, string | number | boolean | number[] | undefined>)}`)
 }
 
 export async function getImageUrls(productId: number): Promise<ImageUrlsResponse> {
@@ -50,7 +50,7 @@ export async function addToCart(
 export async function removeFromCart(userId: number, productId: number): Promise<MessageResponse> {
   return apiRequest(`/api/Cart/${productId}`, {
     method: 'DELETE',
-    body: JSON.stringify({ userId }),
+    body: JSON.stringify({ userId, productId }),
   })
 }
 
@@ -75,7 +75,7 @@ export async function removeFromWishlist(
 ): Promise<MessageResponse> {
   return apiRequest(`/api/Wishlist/${productId}`, {
     method: 'DELETE',
-    body: JSON.stringify({ userId }),
+    body: JSON.stringify({ userId, productId }),
   })
 }
 

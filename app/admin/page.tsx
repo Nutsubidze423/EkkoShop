@@ -106,7 +106,7 @@ export default function AdminPage() {
     setImagesProduct(p)
     try {
       const res = await getImageUrls(p.productId)
-      setImageUrls(res.urls)
+      setImageUrls(res.imageUrls)
     } catch { setImageUrls([]) }
   }
 
@@ -291,7 +291,7 @@ export default function AdminPage() {
           {imageUrls.length > 0 ? (
             <div className="grid grid-cols-3 gap-3">
               {imageUrls.map((url, i) => {
-                const key = url.split('?')[0].replace('https://ekkoshop.s3.eu-north-1.amazonaws.com/', '')
+                const key = new URL(url.split('?')[0]).pathname.slice(1)
                 return (
                   <div key={i} className="relative group aspect-square">
                     <img src={url} alt={`img-${i}`} className="w-full h-full object-cover" />
