@@ -43,6 +43,8 @@ const EN = {
   'product.deleteImage': 'Delete Image',
   'product.price': 'Price',
   'product.category': 'Category',
+  'product.description': 'Description',
+  'product.youMayAlsoLike': 'You May Also Like',
 
   // Cart
   'cart.title': 'Shopping Cart',
@@ -154,6 +156,8 @@ const KA: typeof EN = {
   'product.deleteImage': 'სურათის წაშლა',
   'product.price': 'ფასი',
   'product.category': 'კატეგორია',
+  'product.description': 'აღწერა',
+  'product.youMayAlsoLike': 'შეიძლება მოგეწონოთ',
 
   'cart.title': 'სავაჭრო კალათა',
   'cart.empty': 'კალათა ცარიელია',

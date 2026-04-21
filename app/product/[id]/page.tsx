@@ -12,7 +12,8 @@ import { useCartStore } from '@/store/cartStore'
 import { useWishlistStore } from '@/store/wishlistStore'
 import { useTranslation } from '@/lib/i18n'
 import { toast } from '@/store/toastStore'
-import { getProduct, getImageUrls, deleteProduct, updateProduct, uploadImage, deleteImage } from '@/lib/api/products'
+import { getProduct, getImageUrls, deleteProduct, updateProduct, uploadImage, deleteImage, getAllProducts } from '@/lib/api/products'
+import { ProductCard } from '@/components/product/ProductCard'
 import type { Product } from '@/lib/types'
 import Link from 'next/link'
 
@@ -31,6 +32,9 @@ export default function ProductPage() {
   const [qty, setQty] = useState(1)
 
   // Admin state
+  const [similarProducts, setSimilarProducts] = useState<Product[]>([])
+  const [similarLoading, setSimilarLoading] = useState(false)
+
   const [editOpen, setEditOpen] = useState(false)
   const [editForm, setEditForm] = useState({ name: '', description: '', price: '', amount: '' })
   const [editLoading, setEditLoading] = useState(false)
@@ -67,6 +71,17 @@ export default function ProductPage() {
   }, [id, router])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    if (!product) return
+    setSimilarLoading(true)
+    getAllProducts({ CategoryId: product.categoryId, Page: 1, PageSize: 5 })
+      .then((res) => {
+        setSimilarProducts(res.value.items.filter((p) => p.productId !== product.productId).slice(0, 4))
+      })
+      .catch(() => setSimilarProducts([]))
+      .finally(() => setSimilarLoading(false))
+  }, [product?.categoryId, product?.productId])
 
   const handleAddToCart = async () => {
     if (!user) { toast.info('Please sign in to add to cart'); return }
@@ -239,9 +254,14 @@ export default function ProductPage() {
             {inStock ? `${t('product.inStock')} (${product.amount})` : t('product.outOfStock')}
           </p>
 
-          <p className="text-sm font-sans text-secondary leading-relaxed mb-8">
-            {product.description}
-          </p>
+          <div className="mb-8">
+            <p className="text-[10px] font-sans tracking-widest uppercase text-muted mb-3">
+              {t('product.description')}
+            </p>
+            <p className="text-sm font-sans text-secondary leading-relaxed whitespace-pre-line">
+              {product.description}
+            </p>
+          </div>
 
           {/* Qty + CTA */}
           <div className="flex items-center gap-4 mb-4">
@@ -362,6 +382,31 @@ export default function ProductPage() {
           </button>
         </form>
       </Modal>
+
+      {/* Similar products */}
+      {(similarLoading || similarProducts.length > 0) && (
+        <section className="mt-20 pt-10 border-t border-border">
+          <p className="text-[10px] font-sans tracking-widest uppercase text-muted mb-2">
+            {t('product.youMayAlsoLike')}
+          </p>
+          <h2 className="font-display text-2xl font-light text-dark mb-8">
+            {product.categoryName}
+          </h2>
+          {similarLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-[4/3] w-full" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+              {similarProducts.map((p, i) => (
+                <ProductCard key={p.productId} product={p} index={i} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Delete confirm */}
       <Modal open={deleteConfirm} onClose={() => setDeleteConfirm(false)} title={t('common.delete')} size="sm">

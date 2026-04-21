@@ -37,11 +37,17 @@ body {
 /* Selection */
 ::selection { background: #BC2C2C; color: #F5F1E3; }
 
-/* Focus ring */
+/* Focus ring — buttons, links etc. only; inputs manage their own focus styles */
 :focus-visible {
   outline: 2px solid #2C2C2C;
   outline-offset: 2px;
   border-radius: 0;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
 }
 
 /* Shimmer skeleton */
