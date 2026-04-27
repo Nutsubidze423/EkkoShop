@@ -275,7 +275,20 @@ export default function ProductPage() {
       >
         {/* Images */}
         <div>
-          <ImageCarousel urls={imageUrls} alt={product.name} aspectRatio="aspect-square" />
+          <div
+            className="relative"
+            style={{ padding: '2px', backgroundColor: '#2C2C2C' }}
+          >
+            <div style={{ boxShadow: '8px 8px 0 #BC2C2C' }}>
+              <ImageCarousel urls={imageUrls} alt={product.name} aspectRatio="aspect-square" />
+            </div>
+            <div
+              className="absolute bottom-0 left-0 font-sans font-black uppercase text-white text-[9px] px-3 py-1"
+              style={{ backgroundColor: '#BC2C2C', letterSpacing: '0.12em' }}
+            >
+              {product.categoryName}
+            </div>
+          </div>
 
           {/* Admin image management */}
           {isAdmin && (
