@@ -12,7 +12,7 @@ import { useCartStore } from '@/store/cartStore'
 import { useWishlistStore } from '@/store/wishlistStore'
 import { useTranslation } from '@/lib/i18n'
 import { toast } from '@/store/toastStore'
-import { getProduct, getImageUrls, deleteProduct, updateProduct, uploadImage, deleteImage, getAllProducts } from '@/lib/api/products'
+import { getProduct, deleteProduct, updateProduct, uploadImage, deleteImage, getAllProducts } from '@/lib/api/products'
 import { getProductReviews, createReview, updateReview, deleteReview } from '@/lib/api/reviews'
 import { ProductCard } from '@/components/product/ProductCard'
 import type { Product, Review } from '@/lib/types'
@@ -60,12 +60,9 @@ export default function ProductPage() {
     if (!id) return
     setLoading(true)
     try {
-      const [productRes, urlsRes] = await Promise.all([
-        getProduct(Number(id)),
-        getImageUrls(Number(id)).catch(() => ({ success: true as const, value: { productId: Number(id), imageUrls: [] as string[] } })),
-      ])
+      const productRes = await getProduct(Number(id))
       setProduct(productRes.value)
-      setImageUrls(urlsRes.value?.imageUrls ?? [])
+      setImageUrls(productRes.value.imageUrl ?? [])
       setEditForm({
         name: productRes.value.name,
         description: productRes.value.description,
