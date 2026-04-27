@@ -106,7 +106,7 @@ export default function AdminPage() {
     setImagesProduct(p)
     try {
       const res = await getImageUrls(p.productId)
-      setImageUrls(res.imageUrls)
+      setImageUrls(res.value?.imageUrls ?? [])
     } catch { setImageUrls([]) }
   }
 

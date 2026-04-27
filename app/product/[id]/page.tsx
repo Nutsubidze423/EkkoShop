@@ -62,10 +62,10 @@ export default function ProductPage() {
     try {
       const [productRes, urlsRes] = await Promise.all([
         getProduct(Number(id)),
-        getImageUrls(Number(id)).catch(() => ({ productId: Number(id), imageUrls: [] })),
+        getImageUrls(Number(id)).catch(() => ({ success: true as const, value: { productId: Number(id), imageUrls: [] as string[] } })),
       ])
       setProduct(productRes.value)
-      setImageUrls(urlsRes.imageUrls ?? [])
+      setImageUrls(urlsRes.value?.imageUrls ?? [])
       setEditForm({
         name: productRes.value.name,
         description: productRes.value.description,
@@ -79,6 +79,7 @@ export default function ProductPage() {
     }
   }, [id, router])
 
+  useEffect(() => { window.scrollTo(0, 0) }, [])
   useEffect(() => { load() }, [load])
 
   const loadReviews = useCallback(async (productId: number) => {

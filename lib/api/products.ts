@@ -24,7 +24,7 @@ export async function getAllProducts(
   return apiRequest(`/api/Products/All${buildQuery(query as unknown as Record<string, string | number | boolean | number[] | undefined>)}`)
 }
 
-export async function getImageUrls(productId: number): Promise<ImageUrlsResponse> {
+export async function getImageUrls(productId: number): Promise<{ success: true; value: ImageUrlsResponse }> {
   return apiRequest(`/api/Products/GetImageUrls/${productId}`)
 }
 
