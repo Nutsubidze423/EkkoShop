@@ -44,6 +44,7 @@ export interface Review {
   reviewId: number
   productId: number
   userId: number
+  author: string
   rating: number
   comment: string
   createdAt: string

@@ -473,6 +473,7 @@ export default function ProductPage() {
                     <>
                       <div className="flex items-start justify-between gap-4">
                         <div>
+                          <p className="text-xs font-sans font-medium text-dark mb-1">{review.author}</p>
                           <div className="flex gap-0.5 mb-2">
                             {[1,2,3,4,5].map((n) => (
                               <Star key={n} className="w-3.5 h-3.5" fill={review.rating >= n ? '#BC2C2C' : 'none'} stroke={review.rating >= n ? '#BC2C2C' : '#C8C2B0'} />
