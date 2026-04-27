@@ -66,27 +66,30 @@ export function ImageCarousel({
         {images.length > 1 && (
           <>
             <button
-              onClick={(e) => { e.stopPropagation(); prev() }}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); prev() }}
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-200"
               style={{ backgroundColor: '#2C2C2C' }}
               aria-label="Previous image"
             >
               <ChevronLeft className="w-4 h-4 text-white" />
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); next() }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); next() }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-200"
               style={{ backgroundColor: '#2C2C2C' }}
               aria-label="Next image"
             >
               <ChevronRight className="w-4 h-4 text-white" />
             </button>
 
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 pointer-events-none group-hover:pointer-events-auto">
               {images.map((_, i) => (
                 <button
                   key={i}
-                  onClick={(e) => { e.stopPropagation(); setIndex(i) }}
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIndex(i) }}
                   className="h-1 transition-all duration-200"
                   style={{
                     width: i === index ? '16px' : '6px',

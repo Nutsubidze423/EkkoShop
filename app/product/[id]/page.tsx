@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ShoppingBag, Check, Heart, ArrowLeft, Pencil, Trash2, ImagePlus } from 'lucide-react'
+import { ShoppingBag, Check, Heart, ArrowLeft, Pencil, Trash2, ImagePlus, Star } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { ImageCarousel } from '@/components/product/ImageCarousel'
 import { Modal } from '@/components/ui/Modal'
@@ -13,8 +13,9 @@ import { useWishlistStore } from '@/store/wishlistStore'
 import { useTranslation } from '@/lib/i18n'
 import { toast } from '@/store/toastStore'
 import { getProduct, getImageUrls, deleteProduct, updateProduct, uploadImage, deleteImage, getAllProducts } from '@/lib/api/products'
+import { getProductReviews, createReview, updateReview, deleteReview } from '@/lib/api/reviews'
 import { ProductCard } from '@/components/product/ProductCard'
-import type { Product } from '@/lib/types'
+import type { Product, Review } from '@/lib/types'
 import Link from 'next/link'
 
 export default function ProductPage() {
@@ -31,9 +32,17 @@ export default function ProductPage() {
   const [addedToCart, setAddedToCart] = useState(false)
   const [qty, setQty] = useState(1)
 
-  // Admin state
   const [similarProducts, setSimilarProducts] = useState<Product[]>([])
   const [similarLoading, setSimilarLoading] = useState(false)
+
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [reviewForm, setReviewForm] = useState({ rating: 0, comment: '' })
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
+  const [editingReview, setEditingReview] = useState<Review | null>(null)
+  const [reviewEditForm, setReviewEditForm] = useState({ rating: 0, comment: '' })
+  const [deleteReviewTarget, setDeleteReviewTarget] = useState<Review | null>(null)
 
   const [editOpen, setEditOpen] = useState(false)
   const [editForm, setEditForm] = useState({ name: '', description: '', price: '', amount: '' })
@@ -72,6 +81,22 @@ export default function ProductPage() {
 
   useEffect(() => { load() }, [load])
 
+  const loadReviews = useCallback(async (productId: number) => {
+    setReviewsLoading(true)
+    try {
+      const res = await getProductReviews(productId)
+      setReviews(res.value.reviews)
+    } catch {
+      setReviews([])
+    } finally {
+      setReviewsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (product) loadReviews(product.productId)
+  }, [product?.productId, loadReviews])
+
   useEffect(() => {
     if (!product) return
     setSimilarLoading(true)
@@ -82,6 +107,57 @@ export default function ProductPage() {
       .catch(() => setSimilarProducts([]))
       .finally(() => setSimilarLoading(false))
   }, [product?.categoryId, product?.productId])
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user || !product || reviewForm.rating === 0) return
+    setReviewSubmitting(true)
+    try {
+      await createReview({ productId: product.productId, userId: user.id, rating: reviewForm.rating, comment: reviewForm.comment })
+      toast.success('Review submitted')
+      setReviewForm({ rating: 0, comment: '' })
+      loadReviews(product.productId)
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to submit review')
+    } finally {
+      setReviewSubmitting(false)
+    }
+  }
+
+  const handleUpdateReview = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user || !product || !editingReview || reviewEditForm.rating === 0) return
+    setReviewSubmitting(true)
+    try {
+      await updateReview({
+        reviewId: editingReview.reviewId,
+        productId: product.productId,
+        userId: user.id,
+        rating: reviewEditForm.rating,
+        comment: reviewEditForm.comment,
+        createdAt: editingReview.createdAt,
+      })
+      toast.success('Review updated')
+      setEditingReview(null)
+      loadReviews(product.productId)
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update review')
+    } finally {
+      setReviewSubmitting(false)
+    }
+  }
+
+  const handleDeleteReview = async () => {
+    if (!user || !product || !deleteReviewTarget) return
+    try {
+      await deleteReview({ reviewId: deleteReviewTarget.reviewId, productId: product.productId, userId: user.id })
+      toast.success('Review deleted')
+      setDeleteReviewTarget(null)
+      loadReviews(product.productId)
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete review')
+    }
+  }
 
   const handleAddToCart = async () => {
     if (!user) { toast.info('Please sign in to add to cart'); return }
@@ -246,9 +322,23 @@ export default function ProductPage() {
           </h1>
           <div className="h-px w-12 bg-primary mb-6" />
 
-          <p className="font-sans text-3xl font-medium text-dark tabular-nums mb-2">
-            {t('common.currency')}{product.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-          </p>
+          {product.originalPrice != null && product.originalPrice > product.price ? (
+            <div className="mb-2">
+              <span className="font-sans text-base text-muted tabular-nums line-through block">
+                {t('common.currency')}{product.originalPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </span>
+              <span className="font-sans text-3xl font-medium tabular-nums" style={{ color: '#BC2C2C' }}>
+                {t('common.currency')}{product.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </span>
+              <span className="ml-3 text-xs font-sans font-black uppercase px-2 py-0.5 text-white" style={{ backgroundColor: '#BC2C2C', letterSpacing: '0.08em' }}>
+                -{Math.round((1 - product.price / product.originalPrice) * 100)}% off
+              </span>
+            </div>
+          ) : (
+            <p className="font-sans text-3xl font-medium text-dark tabular-nums mb-2">
+              {t('common.currency')}{product.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </p>
+          )}
 
           <p className={`text-sm font-sans mb-6 ${inStock ? 'text-primary' : 'text-danger'}`}>
             {inStock ? `${t('product.inStock')} (${product.amount})` : t('product.outOfStock')}
@@ -322,6 +412,131 @@ export default function ProductPage() {
           )}
         </div>
       </motion.div>
+
+      {/* Reviews */}
+      <section className="mt-16 pt-10 border-t border-border">
+        <div className="flex items-baseline gap-4 mb-8">
+          <h2 className="font-display text-2xl font-light text-dark">Reviews</h2>
+          {reviews.length > 0 && (
+            <span className="text-sm font-sans text-muted">
+              {(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)} · {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+            </span>
+          )}
+        </div>
+
+        {/* Review list */}
+        {reviewsLoading ? (
+          <div className="space-y-4">
+            {[1, 2].map((i) => <Skeleton key={i} className="h-24 w-full" />)}
+          </div>
+        ) : reviews.length === 0 ? (
+          <p className="text-sm font-sans text-muted mb-8">No reviews yet. Be the first!</p>
+        ) : (
+          <div className="space-y-4 mb-10">
+            {reviews.map((review) => {
+              const isOwn = user?.id === review.userId
+              const isEditing = editingReview?.reviewId === review.reviewId
+              return (
+                <div key={review.reviewId} className="border border-border p-5">
+                  {isEditing ? (
+                    <form onSubmit={handleUpdateReview} className="space-y-4">
+                      <div className="flex gap-1">
+                        {[1,2,3,4,5].map((n) => (
+                          <button key={n} type="button" onClick={() => setReviewEditForm((f) => ({ ...f, rating: n }))}>
+                            <Star className="w-5 h-5 transition-colors" fill={reviewEditForm.rating >= n ? '#BC2C2C' : 'none'} stroke={reviewEditForm.rating >= n ? '#BC2C2C' : '#888'} />
+                          </button>
+                        ))}
+                      </div>
+                      <div className="input-floating">
+                        <textarea placeholder=" " rows={3} style={{ resize: 'none' }} value={reviewEditForm.comment} onChange={(e) => setReviewEditForm((f) => ({ ...f, comment: e.target.value }))} />
+                        <label>Your review</label>
+                      </div>
+                      <div className="flex gap-2">
+                        <button type="submit" disabled={reviewSubmitting || reviewEditForm.rating === 0} className="btn-primary text-xs py-2 px-4">
+                          {reviewSubmitting ? t('common.loading') : 'Save'}
+                        </button>
+                        <button type="button" onClick={() => setEditingReview(null)} className="btn-secondary text-xs py-2 px-4">{t('common.cancel')}</button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="flex gap-0.5 mb-2">
+                            {[1,2,3,4,5].map((n) => (
+                              <Star key={n} className="w-3.5 h-3.5" fill={review.rating >= n ? '#BC2C2C' : 'none'} stroke={review.rating >= n ? '#BC2C2C' : '#C8C2B0'} />
+                            ))}
+                          </div>
+                          <p className="text-sm font-sans text-secondary leading-relaxed">{review.comment}</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-[10px] font-sans text-muted">
+                            {new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          </p>
+                          {isOwn && (
+                            <div className="flex gap-1 mt-2 justify-end">
+                              <button
+                                onClick={() => { setEditingReview(review); setReviewEditForm({ rating: review.rating, comment: review.comment }) }}
+                                className="btn-icon w-7 h-7"
+                                aria-label="Edit review"
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteReviewTarget(review)}
+                                className="btn-icon w-7 h-7 text-danger hover:bg-danger/5"
+                                aria-label="Delete review"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Add review form */}
+        {user ? (
+          <div className="border-t border-border pt-8">
+            <p className="text-[10px] font-sans tracking-widest uppercase text-muted mb-4">Write a Review</p>
+            <form onSubmit={handleSubmitReview} className="space-y-4 max-w-lg">
+              <div className="flex gap-1">
+                {[1,2,3,4,5].map((n) => (
+                  <button key={n} type="button" onClick={() => setReviewForm((f) => ({ ...f, rating: n }))}>
+                    <Star className="w-6 h-6 transition-colors" fill={reviewForm.rating >= n ? '#BC2C2C' : 'none'} stroke={reviewForm.rating >= n ? '#BC2C2C' : '#888'} />
+                  </button>
+                ))}
+              </div>
+              <div className="input-floating">
+                <textarea placeholder=" " rows={3} style={{ resize: 'none' }} value={reviewForm.comment} onChange={(e) => setReviewForm((f) => ({ ...f, comment: e.target.value }))} />
+                <label>Your review</label>
+              </div>
+              <button type="submit" disabled={reviewSubmitting || reviewForm.rating === 0} className="btn-primary">
+                {reviewSubmitting ? t('common.loading') : 'Submit Review'}
+              </button>
+            </form>
+          </div>
+        ) : (
+          <p className="text-sm font-sans text-muted border-t border-border pt-6">
+            <Link href="/auth/login" className="underline hover:text-dark transition-colors">Sign in</Link> to write a review.
+          </p>
+        )}
+      </section>
+
+      {/* Delete review confirm */}
+      <Modal open={!!deleteReviewTarget} onClose={() => setDeleteReviewTarget(null)} title="Delete Review" size="sm">
+        <p className="text-sm font-sans text-secondary mb-6">Delete this review? This cannot be undone.</p>
+        <div className="flex gap-3">
+          <button onClick={handleDeleteReview} className="btn-primary !bg-danger flex-1">Delete</button>
+          <button onClick={() => setDeleteReviewTarget(null)} className="btn-secondary flex-1">{t('common.cancel')}</button>
+        </div>
+      </Modal>
 
       {/* Edit modal */}
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title={t('product.edit')}>

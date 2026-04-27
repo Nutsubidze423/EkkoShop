@@ -31,12 +31,22 @@ export interface Product {
   name: string
   description: string
   price: number
+  originalPrice?: number | null
   amount: number
   categoryId: number
   categoryName: string
   imageUrl: string[] | null
   creationDate: string
   modifiedDate: string
+}
+
+export interface Review {
+  reviewId: number
+  productId: number
+  userId: number
+  rating: number
+  comment: string
+  createdAt: string
 }
 
 export interface PaginatedResponse<T> {

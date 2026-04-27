@@ -112,6 +112,16 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               {t('product.outOfStock')}
             </div>
           )}
+
+          {/* Discount badge */}
+          {inStock && product.originalPrice != null && product.originalPrice > product.price && (
+            <div
+              className="absolute top-2 left-2 font-sans font-black text-white text-[9px] uppercase px-2 py-1"
+              style={{ backgroundColor: '#BC2C2C', letterSpacing: '0.1em' }}
+            >
+              -{Math.round((1 - product.price / product.originalPrice) * 100)}%
+            </div>
+          )}
         </div>
 
         {/* Info — flex-col flex-1 so price row always sits at the bottom */}
@@ -134,12 +144,29 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
           {/* Price + CTA pushed to bottom */}
           <div className="flex items-center justify-between gap-2 mt-auto pt-3 border-t" style={{ borderColor: '#E8E2D3' }}>
-            <span
-              className="font-display font-black text-dark tabular-nums"
-              style={{ fontSize: '1.05rem', letterSpacing: '-0.02em' }}
-            >
-              {t('common.currency')}{product.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
+            {product.originalPrice != null && product.originalPrice > product.price ? (
+              <div className="flex flex-col leading-tight">
+                <span
+                  className="font-sans tabular-nums line-through"
+                  style={{ fontSize: '11px', color: '#888' }}
+                >
+                  {t('common.currency')}{product.originalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+                <span
+                  className="font-display font-black tabular-nums"
+                  style={{ fontSize: '1.05rem', letterSpacing: '-0.02em', color: '#BC2C2C' }}
+                >
+                  {t('common.currency')}{product.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            ) : (
+              <span
+                className="font-display font-black text-dark tabular-nums"
+                style={{ fontSize: '1.05rem', letterSpacing: '-0.02em' }}
+              >
+                {t('common.currency')}{product.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            )}
 
             <button
               onClick={handleAddToCart}
