@@ -16,10 +16,10 @@ import {
 import type { Product } from '@/lib/types'
 
 interface ProductForm {
-  name: string; description: string; price: string; amount: string; categoryId: string
+  name: string; description: string; price: string; originalPrice: string; amount: string; categoryId: string
 }
 
-const EMPTY_FORM: ProductForm = { name: '', description: '', price: '', amount: '', categoryId: '' }
+const EMPTY_FORM: ProductForm = { name: '', description: '', price: '', originalPrice: '', amount: '', categoryId: '' }
 
 export default function AdminPage() {
   const { user, hydrated } = useRequireAuth(true)
@@ -79,6 +79,7 @@ export default function AdminPage() {
       await updateProduct({
         productId: editProduct.productId, name: form.name,
         description: form.description, price: parseFloat(form.price),
+        originalPrice: form.originalPrice !== '' ? parseFloat(form.originalPrice) : null,
         amount: parseInt(form.amount), userId: user.id,
         modifiedDate: new Date().toISOString(),
       })
@@ -99,7 +100,7 @@ export default function AdminPage() {
 
   const openEdit = (p: Product) => {
     setEditProduct(p)
-    setForm({ name: p.name, description: p.description, price: String(p.price), amount: String(p.amount), categoryId: String(p.categoryId) })
+    setForm({ name: p.name, description: p.description, price: String(p.price), originalPrice: p.originalPrice != null ? String(p.originalPrice) : '', amount: String(p.amount), categoryId: String(p.categoryId) })
   }
 
   const openImages = async (p: Product) => {
@@ -154,9 +155,13 @@ export default function AdminPage() {
           <label>{t('admin.price')}</label>
         </div>
         <div className="input-floating">
-          <input type="number" placeholder=" " value={form.amount} onChange={(e) => setField('amount', e.target.value)} required min="0" />
-          <label>{t('admin.amount')}</label>
+          <input type="number" placeholder=" " value={form.originalPrice} onChange={(e) => setField('originalPrice', e.target.value)} min="0" step="0.01" />
+          <label>Original Price (optional)</label>
         </div>
+      </div>
+      <div className="input-floating">
+        <input type="number" placeholder=" " value={form.amount} onChange={(e) => setField('amount', e.target.value)} required min="0" />
+        <label>{t('admin.amount')}</label>
       </div>
       <div>
         <label className="block text-[10px] font-sans tracking-widest uppercase text-muted mb-2">{t('admin.category')}</label>

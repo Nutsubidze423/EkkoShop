@@ -45,7 +45,7 @@ export default function ProductPage() {
   const [deleteReviewTarget, setDeleteReviewTarget] = useState<Review | null>(null)
 
   const [editOpen, setEditOpen] = useState(false)
-  const [editForm, setEditForm] = useState({ name: '', description: '', price: '', amount: '' })
+  const [editForm, setEditForm] = useState({ name: '', description: '', price: '', originalPrice: '', amount: '' })
   const [editLoading, setEditLoading] = useState(false)
   const [uploadOpen, setUploadOpen] = useState(false)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
@@ -70,6 +70,7 @@ export default function ProductPage() {
         name: productRes.value.name,
         description: productRes.value.description,
         price: String(productRes.value.price),
+        originalPrice: productRes.value.originalPrice != null ? String(productRes.value.originalPrice) : '',
         amount: String(productRes.value.amount),
       })
     } catch {
@@ -188,6 +189,7 @@ export default function ProductPage() {
       await updateProduct({
         productId: product.productId, name: editForm.name,
         description: editForm.description, price: parseFloat(editForm.price),
+        originalPrice: editForm.originalPrice !== '' ? parseFloat(editForm.originalPrice) : null,
         amount: parseInt(editForm.amount), userId: user.id,
         modifiedDate: new Date().toISOString(),
       })
@@ -551,17 +553,20 @@ export default function ProductPage() {
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title={t('product.edit')}>
         <form onSubmit={handleEdit} className="space-y-6">
           {[
-            { label: t('admin.productName'), key: 'name', type: 'text' },
-            { label: t('admin.price'), key: 'price', type: 'number' },
-            { label: t('admin.amount'), key: 'amount', type: 'number' },
-          ].map(({ label, key, type }) => (
+            { label: t('admin.productName'), key: 'name', type: 'text', required: true },
+            { label: t('admin.price'), key: 'price', type: 'number', required: true },
+            { label: 'Original Price (leave blank to clear discount)', key: 'originalPrice', type: 'number', required: false },
+            { label: t('admin.amount'), key: 'amount', type: 'number', required: true },
+          ].map(({ label, key, type, required }) => (
             <div key={key} className="input-floating">
               <input
                 type={type}
                 placeholder=" "
                 value={editForm[key as keyof typeof editForm]}
                 onChange={(e) => setEditForm((f) => ({ ...f, [key]: e.target.value }))}
-                required
+                required={required}
+                min={type === 'number' ? '0' : undefined}
+                step={key === 'price' || key === 'originalPrice' ? '0.01' : undefined}
               />
               <label>{label}</label>
             </div>

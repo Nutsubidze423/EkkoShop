@@ -99,6 +99,7 @@ export async function updateProduct(data: {
   name: string
   description: string
   price: number
+  originalPrice?: number | null
   amount: number
   userId: number
   modifiedDate: string
