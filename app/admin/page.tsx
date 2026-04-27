@@ -10,7 +10,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { CATEGORIES } from '@/lib/categories'
 import {
-  getAllProducts, createProduct, updateProduct,
+  getAllProducts, getProduct, createProduct, updateProduct,
   deleteProduct, uploadImage, getImageUrls, deleteImage,
 } from '@/lib/api/products'
 import type { Product } from '@/lib/types'
@@ -98,9 +98,14 @@ export default function AdminPage() {
     } catch (err: unknown) { toast.error(err instanceof Error ? err.message : 'Failed') }
   }
 
-  const openEdit = (p: Product) => {
+  const openEdit = async (p: Product) => {
     setEditProduct(p)
-    setForm({ name: p.name, description: p.description, price: String(p.price), originalPrice: p.originalPrice != null ? String(p.originalPrice) : '', amount: String(p.amount), categoryId: String(p.categoryId) })
+    setForm({ name: p.name, description: p.description, price: String(p.price), originalPrice: '', amount: String(p.amount), categoryId: String(p.categoryId) })
+    try {
+      const res = await getProduct(p.productId)
+      const full = res.value
+      setForm({ name: full.name, description: full.description, price: String(full.price), originalPrice: full.originalPrice != null ? String(full.originalPrice) : '', amount: String(full.amount), categoryId: String(full.categoryId) })
+    } catch { /* keep list data */ }
   }
 
   const openImages = async (p: Product) => {
