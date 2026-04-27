@@ -8,16 +8,25 @@ const LETTER_DELAY = 0.13
 const HOLD_MS = 1500
 const FADE_S = 0.65
 
+// Module-level flag — survives Strict Mode's double effect invocation
+// because it lives outside React's component lifecycle
+let splashShown = false
+
 export function SplashScreen() {
   const [mounted, setMounted] = useState<boolean | null>(null)
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
+    // Strict Mode runs this effect twice; the second run must be a no-op
+    if (splashShown) return
+
     if (sessionStorage.getItem('ekko_splash_done')) {
+      splashShown = true
       setMounted(false)
       return
     }
-    sessionStorage.setItem('ekko_splash_done', '1')
+
+    splashShown = true
     setMounted(true)
     setVisible(true)
 
@@ -25,9 +34,12 @@ export function SplashScreen() {
     const dismissAt = typingMs + HOLD_MS
     const removeAt = dismissAt + FADE_S * 1000 + 100
 
-    const t1 = setTimeout(() => setVisible(false), dismissAt)
-    const t2 = setTimeout(() => setMounted(false), removeAt)
-    return () => { clearTimeout(t1); clearTimeout(t2) }
+    // No cleanup return — timers must survive Strict Mode's effect cleanup+rerun cycle
+    setTimeout(() => setVisible(false), dismissAt)
+    setTimeout(() => {
+      setMounted(false)
+      sessionStorage.setItem('ekko_splash_done', '1')
+    }, removeAt)
   }, [])
 
   if (mounted === null || mounted === false) return null
@@ -74,7 +86,6 @@ export function SplashScreen() {
               </motion.span>
             ))}
 
-            {/* Blinking cursor after last letter */}
             <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: [0, 1, 1, 0, 1, 1, 0] }}
@@ -95,7 +106,6 @@ export function SplashScreen() {
             </motion.span>
           </div>
 
-          {/* Tagline fades in after text */}
           <motion.p
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
