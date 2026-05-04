@@ -163,3 +163,33 @@ export interface CartQuery {
   Page: number
   PageSize: number
 }
+
+// ─── Analytics ────────────────────────────────────────────────────────────────
+
+export interface CategoryRevenue {
+  categoryName: string
+  revenue: number
+}
+
+export interface OrderStatusCount {
+  status: string
+  count: number
+}
+
+export interface TopProduct {
+  productId: number
+  name: string
+  totalSold: number
+}
+
+export interface TopCustomer {
+  userId: number
+  name: string
+  totalSpent: number
+}
+
+export interface LowStockProduct {
+  productId: number
+  name: string
+  amount: number
+}

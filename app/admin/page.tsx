@@ -1,8 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
-import { Plus, Pencil, Trash2, ImagePlus, RotateCcw } from 'lucide-react'
+import { Plus, Pencil, Trash2, ImagePlus, RotateCcw, BarChart2 } from 'lucide-react'
+
+const AnalyticsDashboard = dynamic(() => import('@/components/admin/AnalyticsDashboard'), { ssr: false })
 import { useRequireAuth } from '@/hooks/useAuth'
 import { useTranslation } from '@/lib/i18n'
 import { toast } from '@/store/toastStore'
@@ -35,7 +38,7 @@ export default function AdminPage() {
   const { user, hydrated } = useRequireAuth(true)
   const { t } = useTranslation()
 
-  const [tab, setTab] = useState<'products' | 'inactive' | 'orders'>('products')
+  const [tab, setTab] = useState<'products' | 'inactive' | 'orders' | 'analytics'>('products')
 
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -249,20 +252,26 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div className="flex gap-0 border-b-2 border-[#2C2C2C] mb-8">
-        {(['products', 'inactive', 'orders'] as const).map((t_) => (
+        {([
+          { key: 'products' as const, label: 'Products', icon: undefined },
+          { key: 'inactive' as const, label: 'Inactive', icon: undefined },
+          { key: 'orders' as const, label: 'Orders', icon: undefined },
+          { key: 'analytics' as const, label: 'Analytics', icon: <BarChart2 className="w-3.5 h-3.5" /> },
+        ]).map(({ key, label, icon }) => (
           <button
-            key={t_}
-            onClick={() => setTab(t_)}
-            className="font-sans font-black uppercase text-[11px] px-5 py-2.5 transition-colors"
+            key={key}
+            onClick={() => setTab(key)}
+            className="flex items-center gap-1.5 font-sans font-black uppercase text-[11px] px-5 py-2.5 transition-colors"
             style={{
               letterSpacing: '0.08em',
-              backgroundColor: tab === t_ ? '#2C2C2C' : 'transparent',
-              color: tab === t_ ? 'white' : '#888',
-              borderBottom: tab === t_ ? '2px solid #BC2C2C' : '2px solid transparent',
+              backgroundColor: tab === key ? '#2C2C2C' : 'transparent',
+              color: tab === key ? 'white' : '#888',
+              borderBottom: tab === key ? '2px solid #BC2C2C' : '2px solid transparent',
               marginBottom: '-2px',
             }}
           >
-            {t_ === 'products' ? 'Products' : t_ === 'inactive' ? 'Inactive' : 'Orders'}
+            {icon}
+            {label}
           </button>
         ))}
       </div>
@@ -509,6 +518,9 @@ export default function AdminPage() {
           )}
         </div>
       )}
+
+      {/* Analytics Tab */}
+      {tab === 'analytics' && <AnalyticsDashboard />}
 
       {/* Create */}
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title={t('admin.createProduct')}>
