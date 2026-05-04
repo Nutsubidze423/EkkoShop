@@ -12,6 +12,6 @@ export async function getOrders(
   query: OrdersQuery
 ): Promise<{ success: true; value: Order[] }> {
   return apiRequest(
-    `/api/Orders${buildQuery(query as unknown as Record<string, string | number | boolean | number[] | undefined>)}`
+    `/api/AdminOrder${buildQuery(query as unknown as Record<string, string | number | boolean | number[] | undefined>)}`
   )
 }
