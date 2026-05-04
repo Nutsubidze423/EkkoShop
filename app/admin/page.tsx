@@ -394,68 +394,109 @@ export default function AdminPage() {
       {/* Orders Tab */}
       {tab === 'orders' && (
         <div>
-          {/* Status filter */}
-          <div className="flex gap-2 mb-6 flex-wrap">
-            {([null, 0, 1, 2, 3] as const).map((s) => (
-              <button
-                key={s ?? 'all'}
-                onClick={() => setOrderStatusFilter(s)}
-                className="font-sans font-black uppercase text-[10px] px-4 py-2 transition-colors border"
-                style={{
-                  letterSpacing: '0.08em',
-                  backgroundColor: orderStatusFilter === s ? '#2C2C2C' : 'transparent',
-                  color: orderStatusFilter === s ? 'white' : '#888',
-                  borderColor: orderStatusFilter === s ? '#2C2C2C' : '#C8C2B0',
-                }}
-              >
-                {s === null ? 'All' : STATUS_LABEL[s]}
-              </button>
-            ))}
+          {/* Status tab strip */}
+          <div className="flex overflow-x-auto" style={{ borderBottom: '1px solid #E5E0D0' }}>
+            {([null, 0, 1, 2, 3] as const).map((s) => {
+              const active = orderStatusFilter === s
+              return (
+                <button
+                  key={s ?? 'all'}
+                  onClick={() => setOrderStatusFilter(s)}
+                  className="flex items-center gap-2 font-sans text-[11px] px-5 py-3 whitespace-nowrap transition-colors shrink-0"
+                  style={{
+                    fontWeight: active ? 700 : 400,
+                    color: active ? '#2C2C2C' : '#888',
+                    borderBottom: active ? '2px solid #BC2C2C' : '2px solid transparent',
+                    marginBottom: '-1px',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  {s !== null && (
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: STATUS_STYLE[s].border }}
+                    />
+                  )}
+                  {s === null ? 'All Orders' : STATUS_LABEL[s]}
+                </button>
+              )
+            })}
+            <div className="flex-1" />
+            <div className="flex items-center gap-1 px-3 py-2 shrink-0">
+              <span className="font-sans text-[10px] uppercase tracking-widest" style={{ color: '#C8C2B0' }}>
+                {orders.length} {orders.length === 1 ? 'order' : 'orders'}
+              </span>
+            </div>
           </div>
 
           {ordersLoading ? (
-            <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
+            <div className="border-x border-b" style={{ borderColor: '#E5E0D0' }}>
+              {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+            </div>
           ) : orders.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="font-sans text-sm text-muted">No orders found.</p>
+            <div className="border-x border-b py-20 text-center" style={{ borderColor: '#E5E0D0' }}>
+              <p className="font-sans text-sm" style={{ color: '#888' }}>No orders found.</p>
             </div>
           ) : (
-            <div className="bg-surface border border-border overflow-x-auto">
+            <div className="overflow-x-auto" style={{ border: '1px solid #E5E0D0', borderTop: 'none' }}>
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-border">
-                    {['ID', 'Customer', 'Phone', 'Address', 'Total', 'Date', 'Status'].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-[10px] font-sans font-medium tracking-widest uppercase text-muted">{h}</th>
+                  <tr style={{ backgroundColor: '#2C2C2C' }}>
+                    {['# Order', 'Customer', 'Total', 'Date', 'Phone', 'Address', 'Status'].map((h) => (
+                      <th
+                        key={h}
+                        className="px-4 py-3.5 text-left font-sans text-[10px] tracking-widest uppercase"
+                        style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 500 }}
+                      >
+                        {h}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {orders.map((o, i) => {
-                    const style = STATUS_STYLE[o.status]
+                    const s = STATUS_STYLE[o.status]
                     return (
                       <motion.tr
                         key={o.orderId}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: i * 0.02 }}
-                        className="border-b border-border"
-                        style={{ backgroundColor: style.bg }}
+                        className="border-b transition-colors"
+                        style={{ borderColor: '#E5E0D0' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F5F1E3')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                       >
-                        <td className="px-4 py-4 text-xs font-sans tabular-nums" style={{ color: style.color }}>#{o.orderId}</td>
-                        <td className="px-4 py-4 text-sm font-sans" style={{ color: style.color }}>{o.customerName}</td>
-                        <td className="px-4 py-4 text-xs font-sans tabular-nums" style={{ color: style.color }}>{o.phoneNumber}</td>
-                        <td className="px-4 py-4 text-xs font-sans max-w-[160px] truncate" style={{ color: style.color }}>{o.address}</td>
-                        <td className="px-4 py-4 text-sm font-sans tabular-nums font-medium" style={{ color: style.color }}>
-                          ₾{o.totalAmount.toFixed(2)}
+                        <td className="px-4 py-3.5">
+                          <span className="font-sans text-xs tabular-nums font-semibold" style={{ color: '#2C2C2C', letterSpacing: '0.04em' }}>
+                            #{o.orderId}
+                          </span>
                         </td>
-                        <td className="px-4 py-4 text-xs font-sans tabular-nums" style={{ color: style.color }}>
-                          {new Date(o.orderDate).toLocaleDateString()}
+                        <td className="px-4 py-3.5">
+                          <span className="font-sans text-sm font-medium" style={{ color: '#2C2C2C' }}>{o.customerName}</span>
                         </td>
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-3.5">
+                          <span className="font-sans text-sm tabular-nums font-semibold" style={{ color: '#2C2C2C' }}>
+                            ₾{o.totalAmount.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className="font-sans text-xs tabular-nums" style={{ color: '#888' }}>
+                            {new Date(o.orderDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className="font-sans text-xs tabular-nums" style={{ color: '#888' }}>{o.phoneNumber}</span>
+                        </td>
+                        <td className="px-4 py-3.5 max-w-[180px]">
+                          <span className="font-sans text-xs block truncate" style={{ color: '#888' }}>{o.address}</span>
+                        </td>
+                        <td className="px-4 py-3.5">
                           <span
-                            className="text-[10px] font-sans font-black uppercase px-2 py-1 border"
-                            style={{ backgroundColor: style.bg, color: style.color, borderColor: style.border, letterSpacing: '0.06em' }}
+                            className="inline-flex items-center gap-1.5 font-sans text-[11px] font-medium px-2.5 py-1 rounded-full"
+                            style={{ backgroundColor: s.bg, color: s.color, border: `1px solid ${s.border}` }}
                           >
+                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: s.border }} />
                             {STATUS_LABEL[o.status]}
                           </span>
                         </td>
