@@ -38,6 +38,8 @@ export default function ProductPage() {
   // Reviews state
   const [reviews, setReviews] = useState<Review[]>([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [reviewPage, setReviewPage] = useState(1)
+  const [reviewTotalPages, setReviewTotalPages] = useState(1)
   const [reviewForm, setReviewForm] = useState({ rating: 0, comment: '' })
   const [reviewSubmitting, setReviewSubmitting] = useState(false)
   const [editingReview, setEditingReview] = useState<Review | null>(null)
@@ -83,11 +85,13 @@ export default function ProductPage() {
   useEffect(() => { window.scrollTo(0, 0) }, [])
   useEffect(() => { load() }, [load])
 
-  const loadReviews = useCallback(async (productId: number) => {
+  const loadReviews = useCallback(async (productId: number, page = 1) => {
     setReviewsLoading(true)
     try {
-      const res = await getProductReviews(productId)
-      setReviews(res.value.reviews)
+      const res = await getProductReviews(productId, page)
+      setReviews(res.value.items)
+      setReviewTotalPages(res.value.totalPages)
+      setReviewPage(page)
     } catch {
       setReviews([])
     } finally {
@@ -96,7 +100,7 @@ export default function ProductPage() {
   }, [])
 
   useEffect(() => {
-    if (product) loadReviews(product.productId)
+    if (product) loadReviews(product.productId, 1)
   }, [product?.productId, loadReviews])
 
   useEffect(() => {
@@ -118,7 +122,7 @@ export default function ProductPage() {
       await createReview({ productId: product.productId, userId: user.id, rating: reviewForm.rating, comment: reviewForm.comment })
       toast.success('Review submitted')
       setReviewForm({ rating: 0, comment: '' })
-      loadReviews(product.productId)
+      loadReviews(product.productId, 1)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to submit review')
     } finally {
@@ -141,7 +145,7 @@ export default function ProductPage() {
       })
       toast.success('Review updated')
       setEditingReview(null)
-      loadReviews(product.productId)
+      loadReviews(product.productId, 1)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to update review')
     } finally {
@@ -155,7 +159,7 @@ export default function ProductPage() {
       await deleteReview({ reviewId: deleteReviewTarget.reviewId, productId: product.productId, userId: user.id })
       toast.success('Review deleted')
       setDeleteReviewTarget(null)
-      loadReviews(product.productId)
+      loadReviews(product.productId, 1)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete review')
     }
@@ -303,7 +307,7 @@ export default function ProductPage() {
               {imageUrls.length > 0 && (
                 <div className="grid grid-cols-4 gap-2 mt-2">
                   {imageUrls.map((url, i) => {
-                    const key = url.split('?')[0].replace('https://ekkoshop.s3.eu-north-1.amazonaws.com/', '')
+                    const key = decodeURIComponent(url.split('?')[0].replace('https://ekkoshop.s3.eu-north-1.amazonaws.com/', ''))
                     return (
                       <div key={i} className="relative group">
                         <img src={url} alt={`img-${i}`} className="w-full aspect-square object-cover" />
@@ -443,6 +447,7 @@ export default function ProductPage() {
         ) : reviews.length === 0 ? (
           <p className="text-sm font-sans text-muted mb-8">No reviews yet. Be the first!</p>
         ) : (
+          <>
           <div className="space-y-4 mb-10">
             {reviews.map((review) => {
               const isOwn = user?.id === review.userId
@@ -511,6 +516,27 @@ export default function ProductPage() {
               )
             })}
           </div>
+
+          {/* Review pagination */}
+          {reviewTotalPages > 1 && (
+            <div className="flex items-center gap-2 mt-4 mb-8">
+              {Array.from({ length: reviewTotalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => product && loadReviews(product.productId, i + 1)}
+                  className="w-7 h-7 text-xs font-sans transition-colors"
+                  style={{
+                    backgroundColor: reviewPage === i + 1 ? '#2C2C2C' : 'transparent',
+                    color: reviewPage === i + 1 ? 'white' : '#888',
+                    border: '1px solid #C8C2B0',
+                  }}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+          )}
+          </>
         )}
 
         {/* Add review form */}

@@ -9,10 +9,33 @@ export class ApiException extends Error {
   }
 }
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const raw = token.split('.')[1]
+    const padded = raw.replace(/-/g, '+').replace(/_/g, '/').padEnd(raw.length + ((4 - (raw.length % 4)) % 4), '=')
+    const payload = JSON.parse(atob(padded))
+    return payload.exp ? Date.now() / 1000 > payload.exp : false
+  } catch {
+    return true
+  }
+}
+
+function clearExpiredToken() {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem('ekko_token')
+  window.dispatchEvent(new CustomEvent('ekko:session-expired'))
+}
+
 function getToken(): string | null {
   if (typeof window === 'undefined') return null
   try {
-    return localStorage.getItem('ekko_token')
+    const token = localStorage.getItem('ekko_token')
+    if (!token) return null
+    if (isTokenExpired(token)) {
+      clearExpiredToken()
+      return null
+    }
+    return token
   } catch {
     return null
   }
@@ -57,6 +80,11 @@ export async function apiRequest<T>(
       ...(options.headers as Record<string, string> | undefined),
     },
   })
+
+  if (response.status === 401) {
+    clearExpiredToken()
+    throw await parseError(response)
+  }
 
   if (!response.ok) {
     throw await parseError(response)

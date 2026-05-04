@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -9,6 +9,7 @@ import { useCartStore } from '@/store/cartStore'
 import { useRequireAuth } from '@/hooks/useAuth'
 import { useTranslation } from '@/lib/i18n'
 import { toast } from '@/store/toastStore'
+import { createOrder } from '@/lib/api/orders'
 
 export default function CheckoutPage() {
   const { user, hydrated } = useRequireAuth()
@@ -18,26 +19,55 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false)
   const [placed, setPlaced] = useState(false)
 
+  const fullNameRef = useRef<HTMLInputElement>(null)
+  const emailRef = useRef<HTMLInputElement>(null)
+  const addressRef = useRef<HTMLInputElement>(null)
+  const cityRef = useRef<HTMLInputElement>(null)
+  const phoneRef = useRef<HTMLInputElement>(null)
+
   if (!hydrated || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5F1E3' }}>
-        <div
-          className="w-6 h-6 border-2 rounded-full animate-spin"
-          style={{ borderColor: '#BC2C2C', borderTopColor: 'transparent' }}
-        />
+        <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: '#BC2C2C', borderTopColor: 'transparent' }} />
       </div>
     )
   }
 
   const subtotal = items.reduce((acc, i) => acc + i.price * i.amount, 0)
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const fullName = fullNameRef.current?.value.trim() ?? ''
+    const email = emailRef.current?.value.trim() ?? ''
+    const address = addressRef.current?.value.trim() ?? ''
+    const city = cityRef.current?.value.trim() ?? ''
+    const phone = phoneRef.current?.value.trim() ?? ''
+
+    if (!fullName || !email || !address || !city || !phone) {
+      toast.error('Please fill in all shipping fields')
+      return
+    }
+
     setPlacing(true)
-    await new Promise((r) => setTimeout(r, 800))
-    setPlaced(true)
-    clear()
-    toast.success('Order placed successfully!')
-    setTimeout(() => router.push('/'), 1500)
+    try {
+      await createOrder({
+        userId: user.id,
+        fullName,
+        email,
+        address,
+        city,
+        phone,
+        items: items.map((i) => ({ productId: i.productId, quantity: i.amount })),
+      })
+      setPlaced(true)
+      clear()
+      toast.success('Order placed successfully!')
+      setTimeout(() => router.push('/'), 1500)
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to place order')
+    } finally {
+      setPlacing(false)
+    }
   }
 
   if (placed) {
@@ -89,10 +119,7 @@ export default function CheckoutPage() {
           <ArrowLeft className="w-4 h-4" />
           Back to Cart
         </Link>
-        <p
-          className="font-sans font-black uppercase mb-3"
-          style={{ fontSize: '10px', letterSpacing: '0.15em', color: '#BC2C2C' }}
-        >
+        <p className="font-sans font-black uppercase mb-3" style={{ fontSize: '10px', letterSpacing: '0.15em', color: '#BC2C2C' }}>
           Checkout
         </p>
         <h1
@@ -104,120 +131,112 @@ export default function CheckoutPage() {
         <div className="mt-4 h-1.5 w-12" style={{ backgroundColor: '#BC2C2C' }} />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-12">
-        {/* Left — shipping + payment */}
-        <div className="lg:col-span-2 space-y-10">
-          <section>
-            <h2
-              className="font-display font-black uppercase mb-6 pb-3 border-b-2"
-              style={{ fontSize: '0.85rem', letterSpacing: '0.06em', color: '#2C2C2C', borderColor: '#2C2C2C' }}
-            >
-              Shipping Information
-            </h2>
-            <div className="grid sm:grid-cols-2 gap-5">
-              <div className="input-floating">
-                <input type="text" placeholder=" " defaultValue={`${user.firstName} ${user.lastName}`} />
-                <label>Full Name</label>
-              </div>
-              <div className="input-floating">
-                <input type="email" placeholder=" " defaultValue={user.email} />
-                <label>Email</label>
-              </div>
-              <div className="input-floating sm:col-span-2">
-                <input type="text" placeholder=" " />
-                <label>Address</label>
-              </div>
-              <div className="input-floating">
-                <input type="text" placeholder=" " />
-                <label>City</label>
-              </div>
-              <div className="input-floating">
-                <input type="tel" placeholder=" " />
-                <label>Phone</label>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h2
-              className="font-display font-black uppercase mb-6 pb-3 border-b-2"
-              style={{ fontSize: '0.85rem', letterSpacing: '0.06em', color: '#2C2C2C', borderColor: '#2C2C2C' }}
-            >
-              Payment Method
-            </h2>
-            <div
-              className="flex items-start gap-4 p-4 border-2"
-              style={{ borderColor: '#BC2C2C', backgroundColor: 'rgba(188,44,44,0.04)' }}
-            >
-              <div
-                className="w-4 h-4 border-2 flex items-center justify-center shrink-0 mt-0.5"
-                style={{ borderColor: '#BC2C2C', backgroundColor: '#BC2C2C' }}
+      <form onSubmit={handlePlaceOrder}>
+        <div className="grid lg:grid-cols-3 gap-12">
+          {/* Left — shipping */}
+          <div className="lg:col-span-2 space-y-10">
+            <section>
+              <h2
+                className="font-display font-black uppercase mb-6 pb-3 border-b-2"
+                style={{ fontSize: '0.85rem', letterSpacing: '0.06em', color: '#2C2C2C', borderColor: '#2C2C2C' }}
               >
-                <svg viewBox="0 0 10 8" className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M1 4l3 3 5-6" />
-                </svg>
+                Shipping Information
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-5">
+                <div className="input-floating">
+                  <input ref={fullNameRef} type="text" placeholder=" " defaultValue={`${user.firstName} ${user.lastName}`} required />
+                  <label>Full Name</label>
+                </div>
+                <div className="input-floating">
+                  <input ref={emailRef} type="email" placeholder=" " defaultValue={user.email} required />
+                  <label>Email</label>
+                </div>
+                <div className="input-floating sm:col-span-2">
+                  <input ref={addressRef} type="text" placeholder=" " required />
+                  <label>Address</label>
+                </div>
+                <div className="input-floating">
+                  <input ref={cityRef} type="text" placeholder=" " required />
+                  <label>City</label>
+                </div>
+                <div className="input-floating">
+                  <input ref={phoneRef} type="tel" placeholder=" " required />
+                  <label>Phone</label>
+                </div>
               </div>
-              <div>
-                <p className="font-display font-black uppercase text-xs" style={{ color: '#2C2C2C', letterSpacing: '0.04em' }}>
-                  Cash on Delivery
-                </p>
-                <p className="font-sans text-[10px] mt-1" style={{ color: '#888', lineHeight: 1.5 }}>
-                  Pay when your order arrives. Additional payment methods coming soon.
-                </p>
+            </section>
+
+            <section>
+              <h2
+                className="font-display font-black uppercase mb-6 pb-3 border-b-2"
+                style={{ fontSize: '0.85rem', letterSpacing: '0.06em', color: '#2C2C2C', borderColor: '#2C2C2C' }}
+              >
+                Payment Method
+              </h2>
+              <div
+                className="flex items-start gap-4 p-4 border-2"
+                style={{ borderColor: '#BC2C2C', backgroundColor: 'rgba(188,44,44,0.04)' }}
+              >
+                <div
+                  className="w-4 h-4 border-2 flex items-center justify-center shrink-0 mt-0.5"
+                  style={{ borderColor: '#BC2C2C', backgroundColor: '#BC2C2C' }}
+                >
+                  <svg viewBox="0 0 10 8" className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M1 4l3 3 5-6" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-display font-black uppercase text-xs" style={{ color: '#2C2C2C', letterSpacing: '0.04em' }}>
+                    Cash on Delivery
+                  </p>
+                  <p className="font-sans text-[10px] mt-1" style={{ color: '#888', lineHeight: 1.5 }}>
+                    Pay when your order arrives.
+                  </p>
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
 
-        {/* Right — order summary */}
-        <div>
-          <div className="sticky top-24 border-2 p-6" style={{ borderColor: '#2C2C2C' }}>
-            <h2
-              className="font-display font-black uppercase mb-5 pb-3 border-b-2"
-              style={{ fontSize: '0.85rem', letterSpacing: '0.06em', color: '#2C2C2C', borderColor: '#2C2C2C' }}
-            >
-              Order Summary
-            </h2>
+          {/* Right — summary */}
+          <div>
+            <div className="sticky top-24 border-2 p-6" style={{ borderColor: '#2C2C2C' }}>
+              <h2
+                className="font-display font-black uppercase mb-5 pb-3 border-b-2"
+                style={{ fontSize: '0.85rem', letterSpacing: '0.06em', color: '#2C2C2C', borderColor: '#2C2C2C' }}
+              >
+                Order Summary
+              </h2>
 
-            <div className="space-y-3 mb-5">
-              {items.map((item) => (
-                <div key={item.productId} className="flex justify-between text-sm font-sans">
-                  <span className="truncate mr-2" style={{ color: '#666' }}>
-                    {item.productName}
-                    <span className="ml-1" style={{ color: '#999' }}>×{item.amount}</span>
-                  </span>
-                  <span className="tabular-nums shrink-0 font-medium" style={{ color: '#2C2C2C' }}>
-                    {t('common.currency')}{(item.price * item.amount).toFixed(2)}
+              <div className="space-y-3 mb-5">
+                {items.map((item) => (
+                  <div key={item.productId} className="flex justify-between text-sm font-sans">
+                    <span className="truncate mr-2" style={{ color: '#666' }}>
+                      {item.productName}
+                      <span className="ml-1" style={{ color: '#999' }}>×{item.amount}</span>
+                    </span>
+                    <span className="tabular-nums shrink-0 font-medium" style={{ color: '#2C2C2C' }}>
+                      {t('common.currency')}{(item.price * item.amount).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-4 mb-5 border-t-2" style={{ borderColor: '#2C2C2C' }}>
+                <div className="flex justify-between">
+                  <span className="font-sans font-black text-xs uppercase" style={{ letterSpacing: '0.1em', color: '#2C2C2C' }}>Total</span>
+                  <span className="font-display font-black text-xl tabular-nums" style={{ color: '#2C2C2C' }}>
+                    {t('common.currency')}{subtotal.toFixed(2)}
                   </span>
                 </div>
-              ))}
-            </div>
-
-            <div className="pt-4 mb-5 border-t-2" style={{ borderColor: '#2C2C2C' }}>
-              <div className="flex justify-between">
-                <span className="font-sans font-black text-xs uppercase" style={{ letterSpacing: '0.1em', color: '#2C2C2C' }}>
-                  Total
-                </span>
-                <span className="font-display font-black text-xl tabular-nums" style={{ color: '#2C2C2C' }}>
-                  {t('common.currency')}{subtotal.toFixed(2)}
-                </span>
               </div>
+
+              <button type="submit" disabled={placing} className="btn-primary w-full py-4">
+                {placing ? 'Placing Order…' : 'Place Order →'}
+              </button>
             </div>
-
-            <button
-              onClick={handlePlaceOrder}
-              disabled={placing}
-              className="btn-primary w-full py-4"
-            >
-              {placing ? 'Placing Order…' : 'Place Order →'}
-            </button>
-
-            <p className="text-center font-sans mt-3" style={{ fontSize: '10px', color: '#C8C2B0' }}>
-              Placeholder — no real payment processed
-            </p>
           </div>
         </div>
-      </div>
+      </form>
     </main>
   )
 }

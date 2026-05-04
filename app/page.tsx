@@ -232,6 +232,7 @@ function CatalogContent() {
     minPrice: searchParams.get('minPrice') ?? '',
     maxPrice: searchParams.get('maxPrice') ?? '',
     available: searchParams.get('available') === '1',
+    sort: searchParams.get('sort') ?? '',
   })
 
   const debouncedSearch = useDebounce(filters.search, 400)
@@ -250,6 +251,7 @@ function CatalogContent() {
         MinPrice: debouncedMin ? parseFloat(debouncedMin) : undefined,
         MaxPrice: debouncedMax ? parseFloat(debouncedMax) : undefined,
         Available: filters.available || undefined,
+        Sort: filters.sort || undefined,
         Page: p,
         PageSize: PAGE_SIZE,
       })
@@ -261,7 +263,7 @@ function CatalogContent() {
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearch, filters.categoryId, debouncedMin, debouncedMax, filters.available])
+  }, [debouncedSearch, filters.categoryId, debouncedMin, debouncedMax, filters.available, filters.sort])
 
   useEffect(() => {
     setPage(1)
@@ -281,6 +283,7 @@ function CatalogContent() {
     if (filters.minPrice) params.set('minPrice', filters.minPrice)
     if (filters.maxPrice) params.set('maxPrice', filters.maxPrice)
     if (filters.available) params.set('available', '1')
+    if (filters.sort) params.set('sort', filters.sort)
     const qs = params.toString()
     router.replace(`${pathname}${qs ? '?' + qs : ''}`, { scroll: false })
   }, [filters, pathname, router])

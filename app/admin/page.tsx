@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Pencil, Trash2, ImagePlus } from 'lucide-react'
+import { Plus, Pencil, Trash2, ImagePlus, RotateCcw } from 'lucide-react'
 import { useRequireAuth } from '@/hooks/useAuth'
 import { useTranslation } from '@/lib/i18n'
 import { toast } from '@/store/toastStore'
@@ -12,8 +12,18 @@ import { CATEGORIES } from '@/lib/categories'
 import {
   getAllProducts, getProduct, createProduct, updateProduct,
   deleteProduct, uploadImage, getImageUrls, deleteImage,
+  activateProduct, getInactiveProducts,
 } from '@/lib/api/products'
-import type { Product } from '@/lib/types'
+import { getOrders } from '@/lib/api/orders'
+import type { Product, Order, OrderStatus } from '@/lib/types'
+
+const STATUS_LABEL: Record<OrderStatus, string> = { 0: 'Pending', 1: 'Shipped', 2: 'Paid', 3: 'Cancelled' }
+const STATUS_STYLE: Record<OrderStatus, { bg: string; color: string; border: string }> = {
+  0: { bg: '#F5F1E3', color: '#2C2C2C', border: '#C8C2B0' },
+  1: { bg: '#FFF9DB', color: '#7A5C00', border: '#FCD758' },
+  2: { bg: '#EDFBF0', color: '#166534', border: '#86EFAC' },
+  3: { bg: '#FEF2F2', color: '#991B1B', border: '#FCA5A5' },
+}
 
 interface ProductForm {
   name: string; description: string; price: string; originalPrice: string; amount: string; categoryId: string
@@ -25,10 +35,19 @@ export default function AdminPage() {
   const { user, hydrated } = useRequireAuth(true)
   const { t } = useTranslation()
 
+  const [tab, setTab] = useState<'products' | 'inactive' | 'orders'>('products')
+
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+
+  const [inactiveProducts, setInactiveProducts] = useState<Product[]>([])
+  const [inactiveLoading, setInactiveLoading] = useState(false)
+
+  const [orders, setOrders] = useState<Order[]>([])
+  const [ordersLoading, setOrdersLoading] = useState(false)
+  const [orderStatusFilter, setOrderStatusFilter] = useState<number | null>(null)
 
   const [createOpen, setCreateOpen] = useState(false)
   const [editProduct, setEditProduct] = useState<Product | null>(null)
@@ -53,7 +72,35 @@ export default function AdminPage() {
     finally { setLoading(false) }
   }, [])
 
+  const loadInactive = useCallback(async () => {
+    setInactiveLoading(true)
+    try {
+      const res = await getInactiveProducts()
+      setInactiveProducts(res.value.items)
+    } catch { setInactiveProducts([]) }
+    finally { setInactiveLoading(false) }
+  }, [])
+
+  const loadOrders = useCallback(async (statusFilter: number | null) => {
+    setOrdersLoading(true)
+    try {
+      const res = await getOrders(statusFilter !== null ? { Statuses: [statusFilter] } : {})
+      setOrders(res.value)
+    } catch { setOrders([]) }
+    finally { setOrdersLoading(false) }
+  }, [])
+
   useEffect(() => { if (hydrated && user) load() }, [hydrated, user, load])
+  useEffect(() => { if (hydrated && user && tab === 'inactive') loadInactive() }, [hydrated, user, tab, loadInactive])
+  useEffect(() => { if (hydrated && user && tab === 'orders') loadOrders(orderStatusFilter) }, [hydrated, user, tab, orderStatusFilter, loadOrders])
+
+  const handleActivate = async (productId: number) => {
+    try {
+      await activateProduct(productId)
+      toast.success('Product activated')
+      loadInactive()
+    } catch (err: unknown) { toast.error(err instanceof Error ? err.message : 'Failed') }
+  }
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -187,76 +234,236 @@ export default function AdminPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-      <div className="flex items-end justify-between mb-10">
+      <div className="flex items-end justify-between mb-8">
         <div>
           <h1 className="font-display text-4xl font-light text-dark tracking-wide">{t('admin.title')}</h1>
           <div className="mt-3 h-px w-16 bg-danger" />
         </div>
-        <button onClick={() => { setCreateOpen(true); setForm(EMPTY_FORM) }} className="btn-primary flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          {t('admin.createProduct')}
-        </button>
+        {tab === 'products' && (
+          <button onClick={() => { setCreateOpen(true); setForm(EMPTY_FORM) }} className="btn-primary flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            {t('admin.createProduct')}
+          </button>
+        )}
       </div>
 
-      {/* Table */}
-      {loading ? (
-        <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
-      ) : (
-        <div className="bg-surface border border-border overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                {['ID', 'Product', 'Category', 'Price', 'Stock', 'Actions'].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-[10px] font-sans font-medium tracking-widest uppercase text-muted">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p, i) => (
-                <motion.tr
-                  key={p.productId}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.02 }}
-                  className="border-b border-border hover:bg-background transition-colors"
-                >
-                  <td className="px-4 py-4 text-xs font-sans text-muted tabular-nums">{p.productId}</td>
-                  <td className="px-4 py-4">
-                    <p className="text-sm font-sans text-dark max-w-[200px] truncate">{p.name}</p>
-                  </td>
-                  <td className="px-4 py-4 text-xs font-sans text-muted">{p.categoryName}</td>
-                  <td className="px-4 py-4 text-sm font-sans text-dark tabular-nums">₾{p.price.toFixed(2)}</td>
-                  <td className="px-4 py-4">
-                    <span className={`text-xs font-sans px-2 py-0.5 ${p.amount > 0 ? 'bg-primary/10 text-primary' : 'bg-danger/10 text-danger'}`}>
-                      {p.amount > 0 ? p.amount : 'Out'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => openEdit(p)} className="btn-icon w-8 h-8" aria-label="Edit">
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => openImages(p)} className="btn-icon w-8 h-8" aria-label="Images">
-                        <ImagePlus className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => setDeleteTarget(p)} className="btn-icon w-8 h-8 text-danger hover:bg-danger/5" aria-label="Delete">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Tabs */}
+      <div className="flex gap-0 border-b-2 border-[#2C2C2C] mb-8">
+        {(['products', 'inactive', 'orders'] as const).map((t_) => (
+          <button
+            key={t_}
+            onClick={() => setTab(t_)}
+            className="font-sans font-black uppercase text-[11px] px-5 py-2.5 transition-colors"
+            style={{
+              letterSpacing: '0.08em',
+              backgroundColor: tab === t_ ? '#2C2C2C' : 'transparent',
+              color: tab === t_ ? 'white' : '#888',
+              borderBottom: tab === t_ ? '2px solid #BC2C2C' : '2px solid transparent',
+              marginBottom: '-2px',
+            }}
+          >
+            {t_ === 'products' ? 'Products' : t_ === 'inactive' ? 'Inactive' : 'Orders'}
+          </button>
+        ))}
+      </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-border">
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button key={i} onClick={() => load(i + 1)}
-                  className={`w-7 h-7 text-xs font-sans ${page === i + 1 ? 'bg-dark text-white' : 'text-secondary hover:bg-border'}`}>
-                  {i + 1}
-                </button>
-              ))}
+      {/* Products Tab */}
+      {tab === 'products' && (
+        loading ? (
+          <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
+        ) : (
+          <div className="bg-surface border border-border overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  {['ID', 'Product', 'Category', 'Price', 'Stock', 'Actions'].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-[10px] font-sans font-medium tracking-widest uppercase text-muted">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((p, i) => (
+                  <motion.tr
+                    key={p.productId}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.02 }}
+                    className="border-b border-border hover:bg-background transition-colors"
+                  >
+                    <td className="px-4 py-4 text-xs font-sans text-muted tabular-nums">{p.productId}</td>
+                    <td className="px-4 py-4">
+                      <p className="text-sm font-sans text-dark max-w-[200px] truncate">{p.name}</p>
+                    </td>
+                    <td className="px-4 py-4 text-xs font-sans text-muted">{p.categoryName}</td>
+                    <td className="px-4 py-4 text-sm font-sans text-dark tabular-nums">₾{p.price.toFixed(2)}</td>
+                    <td className="px-4 py-4">
+                      <span className={`text-xs font-sans px-2 py-0.5 ${p.amount > 0 ? 'bg-primary/10 text-primary' : 'bg-danger/10 text-danger'}`}>
+                        {p.amount > 0 ? p.amount : 'Out'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => openEdit(p)} className="btn-icon w-8 h-8" aria-label="Edit">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => openImages(p)} className="btn-icon w-8 h-8" aria-label="Images">
+                          <ImagePlus className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => setDeleteTarget(p)} className="btn-icon w-8 h-8 text-danger hover:bg-danger/5" aria-label="Delete">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-border">
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <button key={i} onClick={() => load(i + 1)}
+                    className={`w-7 h-7 text-xs font-sans ${page === i + 1 ? 'bg-dark text-white' : 'text-secondary hover:bg-border'}`}>
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      )}
+
+      {/* Inactive Tab */}
+      {tab === 'inactive' && (
+        inactiveLoading ? (
+          <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
+        ) : inactiveProducts.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="font-sans text-sm text-muted">No inactive products.</p>
+          </div>
+        ) : (
+          <div className="bg-surface border border-border overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  {['ID', 'Product', 'Category', 'Price', 'Stock', 'Action'].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-[10px] font-sans font-medium tracking-widest uppercase text-muted">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {inactiveProducts.map((p, i) => (
+                  <motion.tr
+                    key={p.productId}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.02 }}
+                    className="border-b border-border hover:bg-background transition-colors"
+                  >
+                    <td className="px-4 py-4 text-xs font-sans text-muted tabular-nums">{p.productId}</td>
+                    <td className="px-4 py-4">
+                      <p className="text-sm font-sans text-dark max-w-[200px] truncate">{p.name}</p>
+                    </td>
+                    <td className="px-4 py-4 text-xs font-sans text-muted">{p.categoryName}</td>
+                    <td className="px-4 py-4 text-sm font-sans text-dark tabular-nums">₾{p.price.toFixed(2)}</td>
+                    <td className="px-4 py-4">
+                      <span className="text-xs font-sans px-2 py-0.5 bg-danger/10 text-danger">
+                        {p.amount > 0 ? p.amount : 'Out'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <button
+                        onClick={() => handleActivate(p.productId)}
+                        className="flex items-center gap-1.5 font-sans font-black uppercase text-[10px] px-3 py-1.5 transition-colors"
+                        style={{ backgroundColor: '#2C2C2C', color: 'white', letterSpacing: '0.06em' }}
+                        onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = '#BC2C2C')}
+                        onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = '#2C2C2C')}
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        Activate
+                      </button>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      )}
+
+      {/* Orders Tab */}
+      {tab === 'orders' && (
+        <div>
+          {/* Status filter */}
+          <div className="flex gap-2 mb-6 flex-wrap">
+            {([null, 0, 1, 2, 3] as const).map((s) => (
+              <button
+                key={s ?? 'all'}
+                onClick={() => setOrderStatusFilter(s)}
+                className="font-sans font-black uppercase text-[10px] px-4 py-2 transition-colors border"
+                style={{
+                  letterSpacing: '0.08em',
+                  backgroundColor: orderStatusFilter === s ? '#2C2C2C' : 'transparent',
+                  color: orderStatusFilter === s ? 'white' : '#888',
+                  borderColor: orderStatusFilter === s ? '#2C2C2C' : '#C8C2B0',
+                }}
+              >
+                {s === null ? 'All' : STATUS_LABEL[s]}
+              </button>
+            ))}
+          </div>
+
+          {ordersLoading ? (
+            <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
+          ) : orders.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="font-sans text-sm text-muted">No orders found.</p>
+            </div>
+          ) : (
+            <div className="bg-surface border border-border overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    {['ID', 'Customer', 'Phone', 'Address', 'Total', 'Date', 'Status'].map((h) => (
+                      <th key={h} className="px-4 py-3 text-left text-[10px] font-sans font-medium tracking-widest uppercase text-muted">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((o, i) => {
+                    const style = STATUS_STYLE[o.status]
+                    return (
+                      <motion.tr
+                        key={o.orderId}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: i * 0.02 }}
+                        className="border-b border-border"
+                        style={{ backgroundColor: style.bg }}
+                      >
+                        <td className="px-4 py-4 text-xs font-sans tabular-nums" style={{ color: style.color }}>#{o.orderId}</td>
+                        <td className="px-4 py-4 text-sm font-sans" style={{ color: style.color }}>{o.customerName}</td>
+                        <td className="px-4 py-4 text-xs font-sans tabular-nums" style={{ color: style.color }}>{o.phoneNumber}</td>
+                        <td className="px-4 py-4 text-xs font-sans max-w-[160px] truncate" style={{ color: style.color }}>{o.address}</td>
+                        <td className="px-4 py-4 text-sm font-sans tabular-nums font-medium" style={{ color: style.color }}>
+                          ₾{o.totalAmount.toFixed(2)}
+                        </td>
+                        <td className="px-4 py-4 text-xs font-sans tabular-nums" style={{ color: style.color }}>
+                          {new Date(o.orderDate).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span
+                            className="text-[10px] font-sans font-black uppercase px-2 py-1 border"
+                            style={{ backgroundColor: style.bg, color: style.color, borderColor: style.border, letterSpacing: '0.06em' }}
+                          >
+                            {STATUS_LABEL[o.status]}
+                          </span>
+                        </td>
+                      </motion.tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
@@ -301,7 +508,7 @@ export default function AdminPage() {
           {imageUrls.length > 0 ? (
             <div className="grid grid-cols-3 gap-3">
               {imageUrls.map((url, i) => {
-                const key = new URL(url.split('?')[0]).pathname.slice(1)
+                const key = decodeURIComponent(new URL(url.split('?')[0]).pathname.slice(1))
                 return (
                   <div key={i} className="relative group aspect-square">
                     <img src={url} alt={`img-${i}`} className="w-full h-full object-cover" />

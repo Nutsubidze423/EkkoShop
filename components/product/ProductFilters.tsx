@@ -11,6 +11,7 @@ export interface FilterState {
   minPrice: string
   maxPrice: string
   available: boolean
+  sort: string
 }
 
 interface ProductFiltersProps {
@@ -43,7 +44,7 @@ export function ProductFilters({ filters, onChange, total }: ProductFiltersProps
   const set = (partial: Partial<FilterState>) => onChange({ ...filters, ...partial })
 
   const clearAll = () =>
-    onChange({ search: '', categoryId: undefined, minPrice: '', maxPrice: '', available: false })
+    onChange({ search: '', categoryId: undefined, minPrice: '', maxPrice: '', available: false, sort: '' })
 
   const applyPrice = () => {
     set({
@@ -53,7 +54,7 @@ export function ProductFilters({ filters, onChange, total }: ProductFiltersProps
   }
 
   const hasFilters =
-    !!filters.search || filters.categoryId !== undefined || !!filters.minPrice || !!filters.maxPrice || filters.available
+    !!filters.search || filters.categoryId !== undefined || !!filters.minPrice || !!filters.maxPrice || filters.available || !!filters.sort
 
   const filterCount = [
     !!filters.search,
@@ -361,6 +362,40 @@ export function ProductFilters({ filters, onChange, total }: ProductFiltersProps
               {t('catalog.available')}
             </span>
           </label>
+        </div>
+
+        {/* ── SORT ─────────────────────────────────── */}
+        <div className="pt-5 border-t-2 mt-4" style={{ borderColor: '#C8C2B0' }}>
+          <p className="font-sans font-black uppercase mb-3" style={{ fontSize: '9px', color: '#BC2C2C', letterSpacing: '0.22em' }}>
+            Sort By
+          </p>
+          {[
+            { value: '', label: 'Default' },
+            { value: 'newest', label: 'Newest' },
+            { value: 'price_asc', label: 'Price: Low → High' },
+            { value: 'price_desc', label: 'Price: High → Low' },
+          ].map((opt) => {
+            const active = filters.sort === opt.value
+            return (
+              <button
+                key={opt.value}
+                onClick={() => set({ sort: opt.value })}
+                className="w-full text-left font-sans uppercase py-1.5 px-3 mb-px transition-all duration-150"
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.04em',
+                  backgroundColor: active ? '#2C2C2C' : 'transparent',
+                  color: active ? 'white' : '#888',
+                  fontWeight: active ? 800 : 500,
+                  borderLeft: `2px solid ${active ? '#BC2C2C' : '#C8C2B0'}`,
+                }}
+                onMouseEnter={(e) => { if (!active) { (e.currentTarget as HTMLButtonElement).style.color = '#2C2C2C'; (e.currentTarget as HTMLButtonElement).style.borderLeftColor = '#BC2C2C' } }}
+                onMouseLeave={(e) => { if (!active) { (e.currentTarget as HTMLButtonElement).style.color = '#888'; (e.currentTarget as HTMLButtonElement).style.borderLeftColor = '#C8C2B0' } }}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
         </div>
 
         {/* ── COUNT ────────────────────────────────── */}

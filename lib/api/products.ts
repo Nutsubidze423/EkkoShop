@@ -140,3 +140,17 @@ export async function deleteImage(
     body: JSON.stringify({ productId, imageKey }),
   })
 }
+
+export async function activateProduct(productId: number): Promise<MessageResponse> {
+  return apiRequest('/api/admin/products/Activate', {
+    method: 'PUT',
+    body: JSON.stringify(productId),
+  })
+}
+
+export async function getInactiveProducts(
+  page = 1,
+  pageSize = 20
+): Promise<{ success: true; value: PaginatedResponse<Product> }> {
+  return apiRequest(`/api/admin/products/Inactive${buildQuery({ Page: page, PageSize: pageSize })}`)
+}

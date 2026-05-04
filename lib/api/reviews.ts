@@ -1,10 +1,12 @@
 import { apiRequest } from './client'
-import type { Review, MessageResponse } from '@/lib/types'
+import type { Review, PaginatedResponse, MessageResponse } from '@/lib/types'
 
 export async function getProductReviews(
-  productId: number
-): Promise<{ success: true; value: { reviews: Review[] } }> {
-  return apiRequest(`/api/Reviews/product/${productId}`)
+  productId: number,
+  page = 1,
+  pageSize = 5
+): Promise<{ success: true; value: PaginatedResponse<Review> }> {
+  return apiRequest(`/api/Reviews/product/${productId}?Page=${page}&PageSize=${pageSize}`)
 }
 
 export async function createReview(data: {

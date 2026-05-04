@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 import type { User } from '@/lib/types'
+import { toast } from '@/store/toastStore'
 
 const TOKEN_KEY = 'ekko_token'
 
-// JWT claim URIs from the backend
 const EMAIL_CLAIM = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
 const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
 
@@ -17,6 +17,17 @@ function decodeToken(token: string): User {
     firstName: payload['FirstName'] ?? '',
     lastName: payload['LastName'] ?? '',
     role: payload[ROLE_CLAIM] ?? 'User',
+  }
+}
+
+function isTokenExpired(token: string): boolean {
+  try {
+    const raw = token.split('.')[1]
+    const padded = raw.replace(/-/g, '+').replace(/_/g, '/').padEnd(raw.length + ((4 - (raw.length % 4)) % 4), '=')
+    const payload = JSON.parse(atob(padded))
+    return payload.exp ? Date.now() / 1000 > payload.exp : false
+  } catch {
+    return true
   }
 }
 
@@ -48,6 +59,11 @@ export const useAuthStore = create<AuthState>()((set) => ({
     const token = localStorage.getItem(TOKEN_KEY)
     if (token) {
       try {
+        if (isTokenExpired(token)) {
+          localStorage.removeItem(TOKEN_KEY)
+          set({ token: null, user: null, hydrated: true })
+          return
+        }
         set({ token, user: decodeToken(token), hydrated: true })
       } catch {
         localStorage.removeItem(TOKEN_KEY)
@@ -58,3 +74,11 @@ export const useAuthStore = create<AuthState>()((set) => ({
     }
   },
 }))
+
+// Listen for session expiry dispatched by apiRequest on 401 or expired token
+if (typeof window !== 'undefined') {
+  window.addEventListener('ekko:session-expired', () => {
+    useAuthStore.setState({ token: null, user: null })
+    toast.info('Your session expired. Please sign in again.')
+  })
+}

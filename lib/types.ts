@@ -113,8 +113,41 @@ export interface ProductsQuery {
   MinPrice?: number
   MaxPrice?: number
   Available?: boolean
+  Sort?: string
   Page: number
   PageSize: number
+}
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+
+export type OrderStatus = 0 | 1 | 2 | 3 // Pending | Shipped | Paid | Cancelled
+
+export interface Order {
+  orderId: number
+  userId: number
+  customerName: string
+  phoneNumber: string
+  address: string
+  totalAmount: number
+  status: OrderStatus
+  orderDate: string
+}
+
+export interface CreateOrderRequest {
+  userId: number
+  fullName: string
+  email: string
+  address: string
+  city: string
+  phone: string
+  items: { productId: number; quantity: number }[]
+}
+
+export interface OrdersQuery {
+  Statuses?: number[]
+  UserId?: number
+  CreatedFrom?: string
+  CreatedTo?: string
 }
 
 export interface WishlistQuery {
