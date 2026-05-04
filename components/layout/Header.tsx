@@ -100,7 +100,7 @@ export function Header() {
                 onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true) }}
                 onFocus={() => searchQuery && setSearchOpen(true)}
                 placeholder={t('nav.search')}
-                className="flex-1 bg-transparent text-xs text-white placeholder-white/40 outline-none font-sans py-0.5 uppercase"
+                className="flex-1 bg-transparent text-xs text-white placeholder-white/40 outline-none font-sans py-1.5 uppercase"
                 style={{ letterSpacing: '0.05em' }}
               />
               {searchQuery && (

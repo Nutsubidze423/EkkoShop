@@ -243,7 +243,7 @@ export function ProductFilters({ filters, onChange, total }: ProductFiltersProps
                   const v = Number(e.target.value)
                   if (!isNaN(v)) setSliderMin(Math.min(Math.max(0, v), sliderMax - 1))
                 }}
-                className="w-full bg-transparent outline-none font-sans font-black tabular-nums appearance-none"
+                className="w-full bg-transparent outline-none font-sans font-black tabular-nums appearance-none py-1"
                 style={{ fontSize: '11px', color: '#2C2C2C' }}
               />
             </div>
@@ -261,7 +261,7 @@ export function ProductFilters({ filters, onChange, total }: ProductFiltersProps
                   const v = Number(e.target.value)
                   if (!isNaN(v)) setSliderMax(Math.min(Math.max(sliderMin + 1, v), PRICE_MAX))
                 }}
-                className="w-full bg-transparent outline-none font-sans font-black tabular-nums appearance-none"
+                className="w-full bg-transparent outline-none font-sans font-black tabular-nums appearance-none py-1"
                 style={{ fontSize: '11px', color: '#2C2C2C' }}
               />
             </div>

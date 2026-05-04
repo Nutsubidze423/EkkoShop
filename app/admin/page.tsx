@@ -174,7 +174,7 @@ export default function AdminPage() {
           value={form.categoryId}
           onChange={(e) => setField('categoryId', e.target.value)}
           required
-          className="w-full border-b border-border bg-transparent text-sm text-dark focus:outline-none focus:border-dark py-2 font-sans"
+          className="w-full border-b border-border bg-transparent text-sm text-dark focus:outline-none focus:border-dark py-2.5 px-3.5 font-sans"
         >
           <option value="">Select category</option>
           {CATEGORIES.map((c) => (

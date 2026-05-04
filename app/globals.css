@@ -83,14 +83,15 @@ select:focus-visible {
   }
   .input-floating input,
   .input-floating textarea {
-    @apply w-full pt-6 pb-2 px-0 bg-transparent border-0 border-b-2 border-[#2C2C2C]
+    @apply w-full pt-6 pb-2 px-3.5 bg-transparent border-0 border-b-2 border-[#2C2C2C]
            text-[#2C2C2C] placeholder-transparent focus:outline-none focus:border-[#BC2C2C]
            transition-colors duration-200;
     font-family: var(--font-sans);
     font-size: 0.9375rem;
+    line-height: 1.5;
   }
   .input-floating label {
-    @apply absolute left-0 top-2 text-[10px] text-[#888] font-semibold tracking-widest uppercase
+    @apply absolute left-3.5 top-2 text-[10px] text-[#888] font-semibold tracking-widest uppercase
            pointer-events-none transition-all duration-200;
     font-family: var(--font-sans);
     letter-spacing: 0.1em;

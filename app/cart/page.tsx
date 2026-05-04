@@ -99,7 +99,7 @@ export default function CartPage() {
                   value={promo}
                   onChange={(e) => setPromo(e.target.value)}
                   placeholder={t('cart.promo')}
-                  className="flex-1 border-b border-border bg-transparent text-sm text-dark placeholder-muted focus:outline-none focus:border-dark py-2 font-sans transition-colors"
+                  className="flex-1 border-b border-border bg-transparent text-sm text-dark placeholder-muted focus:outline-none focus:border-dark py-2.5 px-1 font-sans transition-colors"
                 />
                 <button className="text-xs font-sans font-medium text-dark border-b border-dark pb-2 hover:text-secondary transition-colors">
                   {t('cart.apply')}
