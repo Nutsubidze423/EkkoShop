@@ -166,13 +166,19 @@ export interface CartQuery {
 
 // ─── Analytics ────────────────────────────────────────────────────────────────
 
+export interface RevenuePoint {
+  date: string
+  revenue: number
+  ordersCount: number
+}
+
 export interface CategoryRevenue {
   categoryName: string
   revenue: number
 }
 
 export interface OrderStatusCount {
-  status: string
+  status: number
   count: number
 }
 
@@ -180,11 +186,12 @@ export interface TopProduct {
   productId: number
   name: string
   totalSold: number
+  revenue: number
 }
 
 export interface TopCustomer {
   userId: number
-  name: string
+  fullName: string
   totalSpent: number
 }
 
@@ -192,4 +199,6 @@ export interface LowStockProduct {
   productId: number
   name: string
   amount: number
+  price: number
+  inventoryValue: number
 }

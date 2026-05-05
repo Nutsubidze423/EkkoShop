@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { AlertTriangle } from 'lucide-react'
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
-  Tooltip, ResponsiveContainer, Legend,
+  Tooltip, ResponsiveContainer, Legend, CartesianGrid,
 } from 'recharts'
 import { Skeleton } from '@/components/ui/Skeleton'
 import {
@@ -13,32 +13,39 @@ import {
   getTopProducts, getTopCustomers, getLowStock,
 } from '@/lib/api/analytics'
 import type {
-  CategoryRevenue, OrderStatusCount, TopProduct, TopCustomer, LowStockProduct,
+  RevenuePoint, CategoryRevenue, OrderStatusCount,
+  TopProduct, TopCustomer, LowStockProduct,
 } from '@/lib/types'
 
 const PALETTE = ['#BC2C2C', '#5DA4C9', '#FCD758', '#2C2C2C', '#C8C2B0', '#E07A5F', '#81B29A', '#F4A261']
 
-const STATUS_COLOR: Record<string, string> = {
-  Pending: '#C8C2B0',
-  Shipped: '#FCD758',
-  Paid: '#86EFAC',
-  Completed: '#86EFAC',
-  Cancelled: '#BC2C2C',
+const ORDER_STATUS_LABEL: Record<number, string> = {
+  0: 'Pending', 1: 'Shipped', 2: 'Paid', 3: 'Cancelled',
+}
+const ORDER_STATUS_COLOR: Record<number, string> = {
+  0: '#C8C2B0', 1: '#FCD758', 2: '#86EFAC', 3: '#BC2C2C',
 }
 
-function statusColor(s: string) {
-  return STATUS_COLOR[s] ?? '#5DA4C9'
-}
+type ChartEntry = { name?: string; value?: number; payload?: Record<string, unknown> }
 
-type ChartEntry = { name: string; value: number; payload: Record<string, unknown> }
-
-function CardTooltip({ active, payload, unit }: { active?: boolean; payload?: ChartEntry[]; unit?: string }) {
+function ChartTooltip({
+  active, payload, valueLabel, valueFormat,
+}: {
+  active?: boolean
+  payload?: ChartEntry[]
+  valueLabel?: string
+  valueFormat?: (v: number) => string
+}) {
   if (!active || !payload?.length) return null
+  const val = payload[0]?.value ?? 0
   return (
     <div className="bg-white border border-[#E5E0D0] px-3 py-2 shadow-sm">
-      <p className="font-sans text-xs font-semibold" style={{ color: '#2C2C2C' }}>{String(payload[0].name)}</p>
+      <p className="font-sans text-xs font-semibold mb-0.5" style={{ color: '#2C2C2C' }}>
+        {String(payload[0]?.name ?? '')}
+      </p>
       <p className="font-sans text-xs" style={{ color: '#888' }}>
-        {unit === '₾' ? `₾${Number(payload[0].value).toFixed(2)}` : `${payload[0].value}${unit ? ' ' + unit : ''}`}
+        {valueLabel && `${valueLabel}: `}
+        {valueFormat ? valueFormat(Number(val)) : val}
       </p>
     </div>
   )
@@ -64,7 +71,9 @@ function ChartCard({
             </p>
           </div>
           {subtitle && (
-            <p className="font-sans text-[10px] uppercase tracking-widest mt-0.5" style={{ color: '#888' }}>{subtitle}</p>
+            <p className="font-sans text-[10px] uppercase tracking-widest mt-0.5" style={{ color: '#888' }}>
+              {subtitle}
+            </p>
           )}
         </div>
         <div className="w-1 h-5 shrink-0" style={{ backgroundColor: accent }} />
@@ -83,7 +92,7 @@ function EmptyState({ label = 'No data available' }: { label?: string }) {
 }
 
 export default function AnalyticsDashboard() {
-  const [revenue, setRevenue] = useState<number | null>(null)
+  const [revenuePoints, setRevenuePoints] = useState<RevenuePoint[]>([])
   const [revenueLoading, setRevenueLoading] = useState(true)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
@@ -98,10 +107,9 @@ export default function AnalyticsDashboard() {
   const fetchRevenue = useCallback(async (from?: string, to?: string) => {
     setRevenueLoading(true)
     try {
-      const val = await getRevenue(from || undefined, to || undefined)
-      setRevenue(val)
+      setRevenuePoints(await getRevenue(from || undefined, to || undefined))
     } catch {
-      setRevenue(null)
+      setRevenuePoints([])
     } finally {
       setRevenueLoading(false)
     }
@@ -129,62 +137,66 @@ export default function AnalyticsDashboard() {
   }, [fetchRevenue])
 
   const handleApply = () => fetchRevenue(dateFrom, dateTo)
+  const handleClear = () => { setDateFrom(''); setDateTo(''); fetchRevenue() }
 
-  const handleClear = () => {
-    setDateFrom('')
-    setDateTo('')
-    fetchRevenue()
-  }
+  const totalRevenue = revenuePoints.reduce((s, p) => s + p.revenue, 0)
+  const totalOrders = revenuePoints.reduce((s, p) => s + p.ordersCount, 0)
 
-  const maxSold = topProducts[0]?.totalSold ?? 1
+  const revenueChartData = revenuePoints.map((p) => ({
+    date: new Date(p.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+    revenue: p.revenue,
+    orders: p.ordersCount,
+  }))
+
+  const orderStatusData = orderStatus.map((item) => ({
+    status: ORDER_STATUS_LABEL[item.status] ?? `Status ${item.status}`,
+    count: item.count,
+    fill: ORDER_STATUS_COLOR[item.status] ?? '#5DA4C9',
+  }))
+
   const maxSpent = topCustomers[0]?.totalSpent ?? 1
 
   return (
     <div className="space-y-6">
 
-      {/* ── Revenue KPI ──────────────────────────────────────────────── */}
+      {/* ── Revenue KPI + time-series bar chart ──────────────────────── */}
       <div className="border-2 border-[#2C2C2C] p-8 bg-white">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8 mb-8">
+          {/* Left — KPI numbers */}
           <div>
-            <p
-              className="font-sans font-black uppercase mb-3"
-              style={{ fontSize: '10px', letterSpacing: '0.2em', color: '#BC2C2C' }}
-            >
+            <p className="font-sans font-black uppercase mb-3" style={{ fontSize: '10px', letterSpacing: '0.2em', color: '#BC2C2C' }}>
               {dateFrom || dateTo ? 'Filtered Revenue' : 'All-Time Revenue'}
             </p>
-
             {revenueLoading ? (
-              <Skeleton className="h-16 w-56" />
+              <Skeleton className="h-16 w-64 mb-3" />
             ) : (
               <motion.p
-                key={revenue}
-                initial={{ opacity: 0, y: 10 }}
+                key={totalRevenue}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35 }}
                 className="font-display font-black tabular-nums"
-                style={{
-                  fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
-                  lineHeight: 1,
-                  letterSpacing: '-0.05em',
-                  color: '#2C2C2C',
-                }}
+                style={{ fontSize: 'clamp(2.5rem, 5vw, 4.5rem)', lineHeight: 1, letterSpacing: '-0.05em', color: '#2C2C2C' }}
               >
-                ₾{revenue != null
-                  ? revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                  : '—'}
+                ₾{totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </motion.p>
             )}
-
-            {(dateFrom || dateTo) && (
-              <p className="font-sans text-xs mt-3" style={{ color: '#888' }}>
-                {dateFrom && new Date(dateFrom).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                {dateFrom && dateTo && ' → '}
-                {dateTo && new Date(dateTo).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+            {!revenueLoading && (
+              <p className="font-sans text-sm mt-3" style={{ color: '#888' }}>
+                {totalOrders} {totalOrders === 1 ? 'order' : 'orders'}
+                {(dateFrom || dateTo) && (
+                  <span className="ml-2" style={{ color: '#C8C2B0' }}>
+                    · {dateFrom && new Date(dateFrom).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {dateFrom && dateTo && ' → '}
+                    {dateTo && new Date(dateTo).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </span>
+                )}
               </p>
             )}
           </div>
 
-          <div className="flex flex-wrap items-end gap-3">
+          {/* Right — date filter */}
+          <div className="flex flex-wrap items-end gap-3 shrink-0">
             <div>
               <p className="font-sans text-[9px] uppercase tracking-widest mb-1.5" style={{ color: '#888' }}>From</p>
               <input
@@ -222,7 +234,7 @@ export default function AnalyticsDashboard() {
             {(dateFrom || dateTo) && (
               <button
                 onClick={handleClear}
-                className="font-sans text-[10px] uppercase tracking-widest transition-colors pb-0.5"
+                className="font-sans text-[10px] uppercase tracking-widest transition-colors"
                 style={{ color: '#888', borderBottom: '1px solid #C8C2B0' }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = '#BC2C2C')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = '#888')}
@@ -232,9 +244,45 @@ export default function AnalyticsDashboard() {
             )}
           </div>
         </div>
+
+        {/* Daily revenue bar chart */}
+        {revenueLoading ? (
+          <Skeleton className="h-[180px] w-full" />
+        ) : revenueChartData.length === 0 ? (
+          <EmptyState label="No revenue data for this period" />
+        ) : (
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={revenueChartData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+              <CartesianGrid vertical={false} stroke="#F5F1E3" />
+              <XAxis
+                dataKey="date"
+                tick={{ fontFamily: 'sans-serif', fontSize: 11, fill: '#888' }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontFamily: 'sans-serif', fontSize: 10, fill: '#888' }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) => `₾${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
+                width={45}
+              />
+              <Tooltip
+                content={(props) => (
+                  <ChartTooltip
+                    active={props.active}
+                    payload={props.payload as unknown as ChartEntry[]}
+                    valueFormat={(v) => `₾${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  />
+                )}
+              />
+              <Bar dataKey="revenue" fill="#BC2C2C" radius={[3, 3, 0, 0]} maxBarSize={48} name="Revenue" />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
-      {/* ── Row 1: Category pie + Order status donut ─────────────────── */}
+      {/* ── Category pie + Order status donut ────────────────────────── */}
       <div className="grid lg:grid-cols-2 gap-6">
         <ChartCard title="Revenue by Category" subtitle="All categories">
           {chartsLoading ? (
@@ -257,19 +305,19 @@ export default function AnalyticsDashboard() {
                     <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
                   ))}
                 </Pie>
-                <Tooltip content={(props) => (
-                  <CardTooltip
-                    active={props.active}
-                    payload={props.payload as unknown as ChartEntry[]}
-                    unit="₾"
-                  />
-                )} />
+                <Tooltip
+                  content={(props) => (
+                    <ChartTooltip
+                      active={props.active}
+                      payload={props.payload as unknown as ChartEntry[]}
+                      valueFormat={(v) => `₾${v.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                    />
+                  )}
+                />
                 <Legend
                   iconSize={8}
                   iconType="circle"
-                  formatter={(value) => (
-                    <span style={{ fontFamily: 'sans-serif', fontSize: 11, color: '#2C2C2C' }}>{value}</span>
-                  )}
+                  formatter={(v) => <span style={{ fontFamily: 'sans-serif', fontSize: 11, color: '#2C2C2C' }}>{v}</span>}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -279,13 +327,13 @@ export default function AnalyticsDashboard() {
         <ChartCard title="Order Status" subtitle="Pipeline distribution">
           {chartsLoading ? (
             <Skeleton className="h-[300px] w-full" />
-          ) : orderStatus.length === 0 ? (
+          ) : orderStatusData.length === 0 ? (
             <EmptyState />
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={orderStatus}
+                  data={orderStatusData}
                   dataKey="count"
                   nameKey="status"
                   cx="50%"
@@ -294,23 +342,23 @@ export default function AnalyticsDashboard() {
                   outerRadius={105}
                   paddingAngle={3}
                 >
-                  {orderStatus.map((entry, i) => (
-                    <Cell key={i} fill={statusColor(entry.status)} />
+                  {orderStatusData.map((entry, i) => (
+                    <Cell key={i} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip content={(props) => (
-                  <CardTooltip
-                    active={props.active}
-                    payload={props.payload as unknown as ChartEntry[]}
-                    unit="orders"
-                  />
-                )} />
+                <Tooltip
+                  content={(props) => (
+                    <ChartTooltip
+                      active={props.active}
+                      payload={props.payload as unknown as ChartEntry[]}
+                      valueLabel="orders"
+                    />
+                  )}
+                />
                 <Legend
                   iconSize={8}
                   iconType="circle"
-                  formatter={(value) => (
-                    <span style={{ fontFamily: 'sans-serif', fontSize: 11, color: '#2C2C2C' }}>{value}</span>
-                  )}
+                  formatter={(v) => <span style={{ fontFamily: 'sans-serif', fontSize: 11, color: '#2C2C2C' }}>{v}</span>}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -318,7 +366,7 @@ export default function AnalyticsDashboard() {
         </ChartCard>
       </div>
 
-      {/* ── Row 2: Top products bar + Top customers list ──────────────── */}
+      {/* ── Top products bar + Top customers ─────────────────────────── */}
       <div className="grid lg:grid-cols-2 gap-6">
         <ChartCard title="Top Products" subtitle="By units sold" accent="#BC2C2C">
           {chartsLoading ? (
@@ -337,25 +385,26 @@ export default function AnalyticsDashboard() {
                   tick={{ fontFamily: 'sans-serif', fontSize: 10, fill: '#888' }}
                   axisLine={false}
                   tickLine={false}
-                  domain={[0, maxSold]}
                 />
                 <YAxis
                   type="category"
                   dataKey="name"
-                  width={110}
+                  width={120}
                   tick={{ fontFamily: 'sans-serif', fontSize: 11, fill: '#2C2C2C' }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v: string) => v.length > 15 ? v.slice(0, 15) + '…' : v}
+                  tickFormatter={(v: string) => v.length > 16 ? v.slice(0, 16) + '…' : v}
                 />
-                <Tooltip content={(props) => (
-                  <CardTooltip
-                    active={props.active}
-                    payload={props.payload as unknown as ChartEntry[]}
-                    unit="sold"
-                  />
-                )} />
-                <Bar dataKey="totalSold" fill="#BC2C2C" radius={[0, 2, 2, 0]} maxBarSize={18} />
+                <Tooltip
+                  content={(props) => (
+                    <ChartTooltip
+                      active={props.active}
+                      payload={props.payload as unknown as ChartEntry[]}
+                      valueLabel="sold"
+                    />
+                  )}
+                />
+                <Bar dataKey="totalSold" fill="#BC2C2C" radius={[0, 3, 3, 0]} maxBarSize={18} name="Units sold" />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -384,7 +433,7 @@ export default function AnalyticsDashboard() {
                         {i + 1}
                       </span>
                       <span className="font-sans text-sm font-medium truncate max-w-[140px]" style={{ color: '#2C2C2C' }}>
-                        {c.name}
+                        {c.fullName}
                       </span>
                     </div>
                     <span className="font-sans text-sm tabular-nums font-semibold shrink-0 ml-2" style={{ color: '#2C2C2C' }}>
@@ -397,9 +446,7 @@ export default function AnalyticsDashboard() {
                       initial={{ width: 0 }}
                       animate={{ width: `${(c.totalSpent / maxSpent) * 100}%` }}
                       transition={{ duration: 0.55, delay: i * 0.06, ease: 'easeOut' }}
-                      style={{
-                        backgroundColor: i === 0 ? '#BC2C2C' : i < 3 ? '#5DA4C9' : '#C8C2B0',
-                      }}
+                      style={{ backgroundColor: i === 0 ? '#BC2C2C' : i < 3 ? '#5DA4C9' : '#C8C2B0' }}
                     />
                   </div>
                 </div>
@@ -427,7 +474,7 @@ export default function AnalyticsDashboard() {
             <table className="w-full">
               <thead>
                 <tr style={{ borderBottom: '1px solid #E5E0D0', borderTop: '1px solid #E5E0D0' }}>
-                  {['#', 'Product', 'Stock'].map((h) => (
+                  {['#', 'Product', 'Price', 'Inventory Value', 'Stock'].map((h) => (
                     <th
                       key={h}
                       className="px-6 py-2.5 text-left font-sans text-[10px] uppercase tracking-widest"
@@ -453,6 +500,12 @@ export default function AnalyticsDashboard() {
                     <td className="px-6 py-3 font-sans text-sm font-medium" style={{ color: '#2C2C2C' }}>
                       {p.name}
                     </td>
+                    <td className="px-6 py-3 font-sans text-sm tabular-nums" style={{ color: '#2C2C2C' }}>
+                      ₾{p.price.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-3 font-sans text-sm tabular-nums" style={{ color: '#2C2C2C' }}>
+                      ₾{p.inventoryValue.toFixed(2)}
+                    </td>
                     <td className="px-6 py-3">
                       <span
                         className="inline-flex items-center gap-1.5 font-sans text-[11px] font-semibold px-2.5 py-1"
@@ -466,7 +519,7 @@ export default function AnalyticsDashboard() {
                           className="w-1.5 h-1.5 rounded-full shrink-0"
                           style={{ backgroundColor: p.amount === 0 ? '#BC2C2C' : '#FCD758' }}
                         />
-                        {p.amount === 0 ? 'Out of stock' : `${p.amount} remaining`}
+                        {p.amount === 0 ? 'Out of stock' : `${p.amount} left`}
                       </span>
                     </td>
                   </motion.tr>
