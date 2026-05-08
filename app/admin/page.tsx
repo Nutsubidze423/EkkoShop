@@ -17,8 +17,8 @@ import {
   deleteProduct, uploadImage, getImageUrls, deleteImage,
   activateProduct, getInactiveProducts,
 } from '@/lib/api/products'
-import { getOrders } from '@/lib/api/orders'
-import type { Product, Order, OrderStatus } from '@/lib/types'
+import { getOrders, getOrderItems, updateOrder } from '@/lib/api/orders'
+import type { Product, Order, OrderItem, OrderStatus } from '@/lib/types'
 
 const STATUS_LABEL: Record<OrderStatus, string> = { 0: 'Pending', 1: 'Shipped', 2: 'Paid', 3: 'Cancelled' }
 const STATUS_STYLE: Record<OrderStatus, { bg: string; color: string; border: string }> = {
@@ -51,6 +51,12 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [orderStatusFilter, setOrderStatusFilter] = useState<number | null>(null)
+
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([])
+  const [orderItemsLoading, setOrderItemsLoading] = useState(false)
+  const [orderEditForm, setOrderEditForm] = useState({ status: 0 as OrderStatus, address: '', phoneNumber: '' })
+  const [orderEditSubmitting, setOrderEditSubmitting] = useState(false)
 
   const [createOpen, setCreateOpen] = useState(false)
   const [editProduct, setEditProduct] = useState<Product | null>(null)
@@ -103,6 +109,29 @@ export default function AdminPage() {
       toast.success('Product activated')
       loadInactive()
     } catch (err: unknown) { toast.error(err instanceof Error ? err.message : 'Failed') }
+  }
+
+  const handleOpenOrder = async (order: Order) => {
+    setSelectedOrder(order)
+    setOrderEditForm({ status: order.status, address: order.address, phoneNumber: order.phoneNumber })
+    setOrderItemsLoading(true)
+    try {
+      const res = await getOrderItems(order.orderId)
+      setOrderItems(res.value)
+    } catch { setOrderItems([]) }
+    finally { setOrderItemsLoading(false) }
+  }
+
+  const handleUpdateOrder = async () => {
+    if (!selectedOrder) return
+    setOrderEditSubmitting(true)
+    try {
+      await updateOrder({ id: selectedOrder.orderId, status: orderEditForm.status, address: orderEditForm.address, phoneNumber: orderEditForm.phoneNumber })
+      toast.success('Order updated')
+      setSelectedOrder((prev) => prev ? { ...prev, status: orderEditForm.status, address: orderEditForm.address, phoneNumber: orderEditForm.phoneNumber } : null)
+      loadOrders(orderStatusFilter)
+    } catch (err: unknown) { toast.error(err instanceof Error ? err.message : 'Failed') }
+    finally { setOrderEditSubmitting(false) }
   }
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -471,8 +500,9 @@ export default function AdminPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: i * 0.02 }}
-                        className="border-b transition-colors"
+                        className="border-b transition-colors cursor-pointer"
                         style={{ borderColor: '#E5E0D0' }}
+                        onClick={() => handleOpenOrder(o)}
                         onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F5F1E3')}
                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                       >
@@ -521,6 +551,168 @@ export default function AdminPage() {
 
       {/* Analytics Tab */}
       {tab === 'analytics' && <AnalyticsDashboard />}
+
+      {/* Order Detail Modal */}
+      <Modal open={!!selectedOrder} onClose={() => setSelectedOrder(null)} size="xl">
+        {selectedOrder && (
+          <div className="overflow-y-auto" style={{ maxHeight: 'calc(90vh - 80px)' }}>
+            {/* Header */}
+            <div className="px-6 pt-6 pb-5 border-b" style={{ borderColor: '#E5E0D0' }}>
+              <div className="flex items-center gap-3 mb-2">
+                <h2 className="font-display font-black uppercase" style={{ fontSize: '1.6rem', letterSpacing: '-0.04em', color: '#2C2C2C' }}>
+                  Order #{selectedOrder.orderId}
+                </h2>
+                <span
+                  className="inline-flex items-center gap-1.5 font-sans text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                  style={{ backgroundColor: STATUS_STYLE[selectedOrder.status].bg, color: STATUS_STYLE[selectedOrder.status].color, border: `1px solid ${STATUS_STYLE[selectedOrder.status].border}` }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: STATUS_STYLE[selectedOrder.status].border }} />
+                  {STATUS_LABEL[selectedOrder.status]}
+                </span>
+              </div>
+              <p className="font-sans text-xs" style={{ color: '#888' }}>
+                {new Date(selectedOrder.orderDate).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'long', year: 'numeric' })}
+              </p>
+            </div>
+
+            {/* Customer info strip */}
+            <div className="grid grid-cols-3 gap-px" style={{ backgroundColor: '#E5E0D0' }}>
+              {[
+                { label: 'Customer', value: selectedOrder.customerName },
+                { label: 'Phone', value: selectedOrder.phoneNumber },
+                { label: 'Address', value: selectedOrder.address },
+              ].map(({ label, value }) => (
+                <div key={label} className="px-6 py-4" style={{ backgroundColor: '#FAFAF8' }}>
+                  <p className="font-sans text-[9px] uppercase tracking-widest mb-1" style={{ color: '#888' }}>{label}</p>
+                  <p className="font-sans text-sm font-medium" style={{ color: '#2C2C2C' }}>{value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Items */}
+            <div className="px-6 pt-6 pb-2">
+              <p className="font-sans font-black uppercase text-[10px] tracking-widest mb-4" style={{ color: '#BC2C2C' }}>
+                Order Items
+              </p>
+            </div>
+
+            {orderItemsLoading ? (
+              <div className="px-6 space-y-2 pb-6">
+                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+              </div>
+            ) : (
+              <div className="overflow-x-auto border-t border-b" style={{ borderColor: '#E5E0D0' }}>
+                <table className="w-full">
+                  <thead>
+                    <tr style={{ backgroundColor: '#2C2C2C' }}>
+                      {['Product', 'Category', 'Qty', 'Unit Price', 'Total'].map((h) => (
+                        <th key={h} className="px-6 py-3 text-left font-sans text-[10px] uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 500 }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orderItems.map((item, i) => (
+                      <motion.tr
+                        key={item.orderItemId}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: i * 0.04 }}
+                        className="border-b"
+                        style={{ borderColor: '#F5F1E3' }}
+                      >
+                        <td className="px-6 py-3.5 font-sans text-sm font-medium" style={{ color: '#2C2C2C' }}>{item.name}</td>
+                        <td className="px-6 py-3.5 font-sans text-xs" style={{ color: '#888' }}>{item.categoryName}</td>
+                        <td className="px-6 py-3.5 font-sans text-sm tabular-nums font-semibold" style={{ color: '#2C2C2C' }}>×{item.quantity}</td>
+                        <td className="px-6 py-3.5 font-sans text-sm tabular-nums" style={{ color: '#888' }}>₾{item.unitPrice.toFixed(2)}</td>
+                        <td className="px-6 py-3.5 font-sans text-sm tabular-nums font-semibold" style={{ color: '#2C2C2C' }}>₾{item.totalPrice.toFixed(2)}</td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ borderTop: '2px solid #2C2C2C' }}>
+                      <td colSpan={4} className="px-6 py-4 font-sans font-black uppercase text-right text-[10px] tracking-widest" style={{ color: '#2C2C2C' }}>
+                        Order Total
+                      </td>
+                      <td className="px-6 py-4 font-display font-black text-xl tabular-nums" style={{ color: '#2C2C2C' }}>
+                        ₾{orderItems.reduce((s, item) => s + item.totalPrice, 0).toFixed(2)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+
+            {/* Update form */}
+            <div className="px-6 pt-6 pb-6">
+              <p className="font-sans font-black uppercase text-[10px] tracking-widest mb-5" style={{ color: '#2C2C2C' }}>
+                Update Order
+              </p>
+
+              {/* Status picker */}
+              <div className="mb-5">
+                <p className="font-sans text-[9px] uppercase tracking-widest mb-2.5" style={{ color: '#888' }}>Status</p>
+                <div className="flex gap-2 flex-wrap">
+                  {([0, 1, 2, 3] as const).map((s) => {
+                    const st = STATUS_STYLE[s]
+                    const active = orderEditForm.status === s
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => setOrderEditForm((f) => ({ ...f, status: s }))}
+                        className="inline-flex items-center gap-1.5 font-sans text-[11px] font-semibold px-3 py-1.5 transition-all"
+                        style={{
+                          backgroundColor: active ? st.bg : 'transparent',
+                          color: active ? st.color : '#888',
+                          border: `1px solid ${active ? st.border : '#E5E0D0'}`,
+                        }}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: active ? st.border : '#C8C2B0' }} />
+                        {STATUS_LABEL[s]}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4 mb-6">
+                <div className="input-floating">
+                  <input
+                    type="text"
+                    placeholder=" "
+                    value={orderEditForm.address}
+                    onChange={(e) => setOrderEditForm((f) => ({ ...f, address: e.target.value }))}
+                  />
+                  <label>Address</label>
+                </div>
+                <div className="input-floating">
+                  <input
+                    type="tel"
+                    placeholder=" "
+                    value={orderEditForm.phoneNumber}
+                    onChange={(e) => setOrderEditForm((f) => ({ ...f, phoneNumber: e.target.value }))}
+                  />
+                  <label>Phone Number</label>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={handleUpdateOrder}
+                  disabled={orderEditSubmitting}
+                  className="font-sans font-black uppercase text-[10px] px-6 py-3 transition-colors"
+                  style={{ backgroundColor: '#2C2C2C', color: 'white', letterSpacing: '0.1em' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#BC2C2C')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#2C2C2C')}
+                >
+                  {orderEditSubmitting ? 'Saving…' : 'Save Changes →'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Create */}
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title={t('admin.createProduct')}>

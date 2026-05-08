@@ -150,6 +150,23 @@ export interface OrdersQuery {
   CreatedTo?: string
 }
 
+export interface OrderItem {
+  orderItemId: number
+  productId: number
+  quantity: number
+  unitPrice: number
+  totalPrice: number
+  name: string
+  categoryName: string
+}
+
+export interface UpdateOrderRequest {
+  id: number
+  status: number
+  address: string
+  phoneNumber: string
+}
+
 export interface WishlistQuery {
   UserId: number
   Available?: boolean
