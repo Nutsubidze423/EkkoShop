@@ -27,12 +27,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!hydrated) return
     if (user && token) {
-      getCart({ UserId: user.id, Page: 1, PageSize: 100 })
-        .then((res) => setCartItems(res.value.items))
-        .catch(() => {})
-      getWishlist({ UserId: user.id, Page: 1, PageSize: 100 })
-        .then((res) => setWishlistItems(res.value.items))
-        .catch(() => {})
+      ;(async () => {
+        // Merge any guest cart items before fetching the DB cart
+        await useCartStore.getState().mergeAndClearGuest(user.id)
+        const [cartRes, wishlistRes] = await Promise.all([
+          getCart({ UserId: user.id, Page: 1, PageSize: 100 }),
+          getWishlist({ UserId: user.id, Page: 1, PageSize: 100 }),
+        ])
+        setCartItems(cartRes.value.items)
+        setWishlistItems(wishlistRes.value.items)
+      })().catch(() => {})
     } else {
       loadGuestCart()
     }

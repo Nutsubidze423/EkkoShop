@@ -35,13 +35,12 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const handleAddToCart = useCallback(
     async (e: React.MouseEvent) => {
       e.preventDefault()
-      if (!user) { toast.info('Please sign in to add to cart'); return }
       if (!inStock) return
 
       setAddedToCart(true)
       await addItem({
         cartItemId: 0,
-        userId: user.id,
+        userId: user?.id ?? 0,
         cartId: 0,
         productId: product.productId,
         productName: product.name,

@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import type { User } from '@/lib/types'
 import { toast } from '@/store/toastStore'
-import { useCartStore } from '@/store/cartStore'
 
 const TOKEN_KEY = 'ekko_token'
 
@@ -48,9 +47,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
 
   login: (token: string) => {
     localStorage.setItem(TOKEN_KEY, token)
-    const user = decodeToken(token)
-    set({ token, user })
-    useCartStore.getState().mergeAndClearGuest(user.id)
+    set({ token, user: decodeToken(token) })
   },
 
   logout: () => {
