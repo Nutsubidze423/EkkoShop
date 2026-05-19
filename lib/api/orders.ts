@@ -1,6 +1,15 @@
 import { apiRequest, buildQuery } from './client'
 import type { Order, OrderItem, CreateOrderRequest, UpdateOrderRequest, OrdersQuery, MessageResponse } from '@/lib/types'
 
+export async function mergeGuestCart(
+  items: { productId: number; userId: number; quantity: number }[]
+): Promise<MessageResponse> {
+  return apiRequest<MessageResponse>('/api/Cart/Merge', {
+    method: 'POST',
+    body: JSON.stringify(items),
+  })
+}
+
 export async function createOrder(data: CreateOrderRequest): Promise<MessageResponse> {
   return apiRequest('/api/Orders', {
     method: 'POST',

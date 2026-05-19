@@ -6,16 +6,16 @@ import { motion } from 'framer-motion'
 import { ShoppingBag, ArrowLeft } from 'lucide-react'
 import { CartItem } from '@/components/cart/CartItem'
 import { useCartStore } from '@/store/cartStore'
-import { useRequireAuth } from '@/hooks/useAuth'
+import { useAuthStore } from '@/store/authStore'
 import { useTranslation } from '@/lib/i18n'
 
 export default function CartPage() {
-  const { user, hydrated } = useRequireAuth()
+  const { user, hydrated } = useAuthStore()
   const items = useCartStore((s) => s.items)
   const { t } = useTranslation()
   const [promo, setPromo] = useState('')
 
-  if (!hydrated || !user) {
+  if (!hydrated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -57,7 +57,7 @@ export default function CartPage() {
           {/* Items */}
           <div className="lg:col-span-2">
             {items.map((item) => (
-              <CartItem key={item.cartItemId || item.productId} item={item} userId={user.id} />
+              <CartItem key={item.cartItemId || item.productId} item={item} userId={user?.id ?? 0} />
             ))}
             <Link href="/" className="inline-flex items-center gap-2 text-sm font-sans text-muted hover:text-dark transition-colors mt-6">
               <ArrowLeft className="w-4 h-4" />
@@ -113,8 +113,11 @@ export default function CartPage() {
                 </span>
               </div>
 
-              <Link href="/checkout" className="btn-primary w-full py-4 text-sm tracking-widest uppercase">
-                {t('cart.checkout')}
+              <Link
+                href={user ? '/checkout' : '/auth/login?redirect=/cart'}
+                className="btn-primary w-full py-4 text-sm tracking-widest uppercase"
+              >
+                {user ? t('cart.checkout') : t('nav.login')}
               </Link>
             </div>
           </div>

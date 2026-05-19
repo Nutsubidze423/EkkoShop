@@ -6,6 +6,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { useRequireAuth } from '@/hooks/useAuth'
 import { useTranslation } from '@/lib/i18n'
 import { toast } from '@/store/toastStore'
+import { changePassword } from '@/lib/api/auth'
 
 export default function AccountPage() {
   const { user, hydrated } = useRequireAuth()
@@ -34,11 +35,15 @@ export default function AccountPage() {
       return
     }
     setSavingPass(true)
-    // Password change endpoint not in API docs — show info
-    setTimeout(() => {
-      toast.info('Password change not yet implemented in API')
+    try {
+      await changePassword(user.id, passwordForm.currentPassword, passwordForm.newPassword, passwordForm.confirmPassword)
+      toast.success('Password changed successfully')
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to change password')
+    } finally {
       setSavingPass(false)
-    }, 500)
+    }
   }
 
   return (

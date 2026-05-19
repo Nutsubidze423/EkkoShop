@@ -56,3 +56,15 @@ export async function resetPassword(
     body: JSON.stringify({ email, newPassword, confirmPassword }),
   })
 }
+
+export async function changePassword(
+  userId: number,
+  currentPassword: string,
+  newPassword: string,
+  confirmPassword: string
+): Promise<MessageResponse> {
+  return apiRequest<MessageResponse>('/api/Auth/ChangePassword', {
+    method: 'PUT',
+    body: JSON.stringify({ userId, currentPassword, newPassword, confirmPassword }),
+  })
+}

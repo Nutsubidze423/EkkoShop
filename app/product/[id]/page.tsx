@@ -166,11 +166,10 @@ export default function ProductPage() {
   }
 
   const handleAddToCart = async () => {
-    if (!user) { toast.info('Please sign in to add to cart'); return }
     if (!product || !inStock) return
     setAddedToCart(true)
     await addItem({
-      cartItemId: 0, userId: user.id, cartId: 0,
+      cartItemId: 0, userId: user?.id ?? 0, cartId: 0,
       productId: product.productId, productName: product.name,
       productDescription: product.description, price: product.price,
       amount: qty, productCategoryName: product.categoryName,
