@@ -1,8 +1,9 @@
-import { apiRequest } from './client'
+import { apiRequest, BASE_URL } from './client'
 import type {
   LoginResponse,
   RegisterResponse,
   MessageResponse,
+  User,
 } from '@/lib/types'
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
@@ -55,6 +56,20 @@ export async function resetPassword(
     method: 'POST',
     body: JSON.stringify({ email, newPassword, confirmPassword }),
   })
+}
+
+// Called after Google OAuth callback — reads the HttpOnly cookie the backend just set
+export async function getMe(): Promise<User> {
+  return apiRequest<User>('/api/Auth/Me')
+}
+
+// Best-effort: tells the backend to clear the auth cookie on logout
+export async function logoutFromServer(): Promise<void> {
+  try {
+    await fetch(`${BASE_URL}/api/Auth/Logout`, { method: 'POST', credentials: 'include' })
+  } catch {
+    // Non-fatal: cookie expires on its own anyway
+  }
 }
 
 export async function changePassword(

@@ -75,6 +75,7 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
+    credentials: 'include', // sends HttpOnly cookies on every request
     headers: {
       ...buildHeaders(isFormData),
       ...(options.headers as Record<string, string> | undefined),
